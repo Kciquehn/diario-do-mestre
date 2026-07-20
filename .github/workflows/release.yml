@@ -13,12 +13,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Baixar o repositório
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
+          package-manager-cache: false
 
       - name: Validar fontes e manifesto
         run: npm run validate
@@ -32,7 +33,8 @@ jobs:
           }
 
       - name: Montar pacote do Foundry
-        run: npm run build
+        shell: pwsh
+        run: ./tools/build-release.ps1
 
       - name: Criar GitHub Release
         shell: pwsh
