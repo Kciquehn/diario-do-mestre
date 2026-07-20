@@ -1,0 +1,23 @@
+<div class="dmj-library-shell">
+  <header class="dmj-library-hero">
+    <div><p>{{localize "DMJ.Resource.Kicker"}}</p><h1>{{localize "DMJ.Resource.Library"}}</h1><span>{{localize "DMJ.Resource.Intro"}}</span></div>
+    <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+  </header>
+  <div class="dmj-resource-toolbar">
+    <select data-resource-kind-filter aria-label="{{localize "DMJ.Resource.FilterType"}}">
+      {{#each kinds}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+    </select>
+    <input type="search" data-resource-search value="{{filterQuery}}" placeholder="{{localize "DMJ.Resource.SearchPlaceholder"}}" aria-label="{{localize "DMJ.Resource.Search"}}">
+    <button type="button" data-action="create-resource"><i class="fa-solid fa-plus" aria-hidden="true"></i> {{localize "DMJ.Resource.Create"}}</button>
+  </div>
+  <main class="dmj-resource-grid">
+    {{#if empty}}<div class="dmj-resource-empty"><i class="fa-solid fa-book-open" aria-hidden="true"></i><h2>{{localize "DMJ.Resource.Empty"}}</h2></div>{{/if}}
+    {{#unless empty}}<div class="dmj-resource-empty" data-resource-filter-empty hidden><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><h2>{{localize "DMJ.Resource.FilterEmpty"}}</h2></div>{{/unless}}
+    {{#each resources}}
+      <button type="button" class="dmj-resource-tile" data-action="open-resource" data-page-id="{{id}}" data-resource-kind="{{kind}}" title="{{localize "DMJ.Resource.ContextHint"}}">
+        {{#if image}}<img src="{{image}}" alt="">{{else}}<i class="fa-solid {{icon}}" aria-hidden="true"></i>{{/if}}
+        <span><strong>{{name}}</strong><small>{{kindLabel}}</small></span>
+      </button>
+    {{/each}}
+  </main>
+</div>

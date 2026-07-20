@@ -1,0 +1,117 @@
+<div class="dmj-board-shell">
+  <header class="dmj-board-toolbar">
+    <div class="dmj-board-heading"><span>{{localize "DMJ.Board.Title"}}</span><strong>{{sessionName}}</strong></div>
+    <div class="dmj-board-help">
+      <button type="button" class="dmj-board-help-trigger" aria-label="{{localize "DMJ.Board.HelpLabel"}}" aria-describedby="{{boardHelpId}}"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button>
+      <div class="dmj-board-help-tooltip" id="{{boardHelpId}}" role="tooltip">
+        <strong>{{localize "DMJ.Board.HelpTitle"}}</strong>
+        <ul>
+          <li><kbd>/diálogo</kbd><span>{{localize "DMJ.Board.HelpCallout"}}</span></li>
+          <li><kbd>/seleção</kbd><span>{{localize "DMJ.Board.HelpCheck"}}</span></li>
+          <li><kbd>/teste Nome</kbd><span>{{localize "DMJ.Board.HelpTest"}}</span></li>
+          <li><kbd>@</kbd><span>{{localize "DMJ.Board.HelpMention"}}</span></li>
+          <li><i class="fa-solid fa-hand" aria-hidden="true"></i><span>{{localize "DMJ.Board.HelpDrop"}}</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="dmj-board-actions">
+      {{#if popoutAvailable}}<button type="button" data-action="popout-workspace" title="{{localize "DMJ.Popout.OpenWorkspace"}}" aria-label="{{localize "DMJ.Popout.OpenWorkspace"}}"><i class="fa-solid fa-display" aria-hidden="true"></i><span>{{localize "DMJ.Popout.OpenMonitor"}}</span></button>{{/if}}
+      <div class="dmj-autosave-status" data-autosave-status data-state="saved" role="status" aria-live="polite"><i class="fa-solid fa-check" aria-hidden="true"></i><span>{{localize "DMJ.Board.AutosaveSaved"}}</span></div>
+    </div>
+  </header>
+
+  <nav class="dmj-scene-tabs" aria-label="{{localize "DMJ.Board.Scenes"}}">
+    {{#each scenes}}
+      <div class="dmj-scene-tab {{#if active}}active{{/if}}" data-action="select-scene" data-scene-id="{{id}}">
+        {{#if active}}<input data-scene-title data-scene-id="{{id}}" value="{{title}}" maxlength="120" aria-label="{{localize "DMJ.Board.SceneName"}}">{{else}}<span>{{title}}</span>{{/if}}
+        <button type="button" data-action="remove-scene" data-scene-id="{{id}}" aria-label="{{localize "DMJ.Board.RemoveScene"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+    {{/each}}
+    <button type="button" class="dmj-add-scene-tab" data-action="add-scene"><i class="fa-solid fa-plus" aria-hidden="true"></i> {{localize "DMJ.Board.AddScene"}}</button>
+  </nav>
+
+  {{#if hasScenes}}
+    <section class="dmj-scene-links" data-scene-links-drop>
+      <header>
+        <span><i class="fa-solid fa-link" aria-hidden="true"></i><strong>{{localize "DMJ.Board.SceneLinks"}}</strong><small>{{activeScene.linkCount}}</small></span>
+        <button type="button" data-action="add-scene-link" aria-label="{{localize "DMJ.Board.AddSceneLink"}}"><i class="fa-solid fa-plus" aria-hidden="true"></i> {{localize "DMJ.Board.AddSceneLink"}}</button>
+      </header>
+      {{#if activeScene.hasLinks}}
+        <div class="dmj-scene-link-list">
+          {{#each activeScene.links}}
+            <article class="dmj-scene-link {{#if missing}}missing{{/if}}" data-scene-link data-link-id="{{id}}" data-uuid="{{uuid}}" data-link-name="{{name}}" data-link-document-name="{{documentName}}" data-link-kind="{{kind}}" data-link-image="{{image}}">
+              <button type="button" class="dmj-scene-link-open" data-action="open-scene-link" data-uuid="{{uuid}}" title="{{localize "DMJ.Board.SceneLinkOpen"}}">
+                {{#if image}}<img src="{{image}}" alt="">{{else}}<i class="fa-solid {{icon}}" aria-hidden="true"></i>{{/if}}
+                <span><strong>{{name}}</strong><small>{{kindLabel}}</small></span>
+              </button>
+              <button type="button" class="dmj-scene-link-remove" data-action="remove-scene-link" data-link-id="{{id}}" aria-label="{{localize "DMJ.Board.SceneLinkRemove"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+              <input type="text" maxlength="300" data-scene-link-note value="{{note}}" placeholder="{{localize "DMJ.Board.SceneLinkNotePlaceholder"}}" aria-label="{{localize "DMJ.Board.SceneLinkNote"}}">
+            </article>
+          {{/each}}
+        </div>
+      {{else}}
+        <p class="dmj-scene-links-empty"><i class="fa-solid fa-hand" aria-hidden="true"></i> {{localize "DMJ.Board.SceneLinkDropHint"}}</p>
+      {{/if}}
+    </section>
+    <main class="dmj-kanban-columns">
+      {{#each activeScene.columns}}
+        <section class="dmj-kanban-column" data-column-id="{{id}}" data-column-width="{{width}}" data-column-height="{{height}}" style="--dmj-column-width: {{width}}px;{{#if height}} --dmj-column-height: {{height}}px;{{/if}}">
+          <header><input data-column-title value="{{title}}" maxlength="80" aria-label="{{localize "DMJ.Board.ColumnName"}}"><span data-column-count>0</span><button type="button" data-action="remove-column" data-column-id="{{id}}" aria-label="{{localize "DMJ.Board.RemoveColumn"}}"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button></header>
+          <div class="dmj-task-list">
+            {{#each cards}}
+              <article class="dmj-task-card" data-card-id="{{id}}">
+                <header class="dmj-task-drag" data-card-drag-handle draggable="true" title="{{localize "DMJ.Board.DragCard"}}"><button type="button" draggable="false" data-action="remove-card" aria-label="{{localize "DMJ.Board.RemoveCard"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
+                <div class="dmj-card-content">
+                  {{#each blocks}}
+                    <section class="dmj-content-block dmj-{{type}}-block" data-block-id="{{id}}" data-block-type="{{type}}">
+                      {{#if isText}}<div class="dmj-block-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-block-text data-placeholder="{{localize "DMJ.Board.EditorPlaceholder"}}" aria-label="{{localize "DMJ.Board.EditorText"}}">{{{editorHTML}}}</div>{{/if}}
+                      {{#if isCallout}}
+                        <header><label class="dmj-callout-title"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i><input type="text" maxlength="120" data-block-title value="{{title}}" aria-label="{{localize "DMJ.Board.CalloutTitle"}}"></label><button type="button" data-action="remove-block" aria-label="{{localize "DMJ.Board.RemoveBlock"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
+                        <div class="dmj-block-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-block-text data-placeholder="{{localize "DMJ.Board.CalloutPlaceholder"}}" aria-label="{{localize "DMJ.Board.Callout"}}">{{{editorHTML}}}</div>
+                      {{/if}}
+                      {{#if isTest}}
+                        <header><label class="dmj-test-title"><i class="fa-solid fa-dice-d20" aria-hidden="true"></i><input type="text" maxlength="120" data-block-title value="{{title}}" placeholder="{{localize "DMJ.Board.TestTitlePlaceholder"}}" aria-label="{{localize "DMJ.Board.TestTitle"}}"></label><button type="button" data-action="remove-block" aria-label="{{localize "DMJ.Board.RemoveBlock"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
+                        <div class="dmj-test-outcomes">
+                          {{#if hasSuccess}}
+                            <section class="dmj-test-outcome dmj-test-success" data-test-outcome="success"><strong>{{localize "DMJ.Board.TestSuccess"}}</strong><div class="dmj-block-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-block-text data-test-result="success" data-placeholder="{{localize "DMJ.Board.TestSuccessPlaceholder"}}" aria-label="{{localize "DMJ.Board.TestSuccess"}}">{{{successEditorHTML}}}</div><button type="button" data-action="remove-test-outcome" aria-label="{{localize "DMJ.Board.TestRemoveOutcome"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></section>
+                          {{/if}}
+                          {{#if hasFailure}}
+                            <section class="dmj-test-outcome dmj-test-failure" data-test-outcome="failure"><strong>{{localize "DMJ.Board.TestFailure"}}</strong><div class="dmj-block-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-block-text data-test-result="failure" data-placeholder="{{localize "DMJ.Board.TestFailurePlaceholder"}}" aria-label="{{localize "DMJ.Board.TestFailure"}}">{{{failureEditorHTML}}}</div><button type="button" data-action="remove-test-outcome" aria-label="{{localize "DMJ.Board.TestRemoveOutcome"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></section>
+                          {{/if}}
+                          {{#each results}}
+                            <section class="dmj-test-outcome dmj-test-result" data-test-outcome="result" data-test-result-id="{{id}}"><strong>{{localize "DMJ.Board.TestResult"}}</strong><input type="text" inputmode="decimal" maxlength="30" data-test-result-value value="{{value}}" placeholder="{{localize "DMJ.Board.TestResultValuePlaceholder"}}" aria-label="{{localize "DMJ.Board.TestResultValue"}}"><div class="dmj-block-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-block-text data-test-result-text data-placeholder="{{localize "DMJ.Board.TestResultPlaceholder"}}" aria-label="{{localize "DMJ.Board.TestResult"}}">{{{editorHTML}}}</div><button type="button" data-action="remove-test-outcome" aria-label="{{localize "DMJ.Board.TestRemoveOutcome"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></section>
+                          {{/each}}
+                        </div>
+                        <details class="dmj-test-add-control">
+                          <summary aria-label="{{localize "DMJ.Board.TestAdd"}}"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>{{localize "DMJ.Board.TestAdd"}}</span></summary>
+                          <div class="dmj-test-add-menu" role="menu">
+                            {{#unless hasSuccess}}<button type="button" data-action="add-test-part" data-test-part="success"><i class="fa-solid fa-check" aria-hidden="true"></i><span>{{localize "DMJ.Board.TestSuccess"}}</span></button>{{/unless}}
+                            {{#unless hasFailure}}<button type="button" data-action="add-test-part" data-test-part="failure"><i class="fa-solid fa-xmark" aria-hidden="true"></i><span>{{localize "DMJ.Board.TestFailure"}}</span></button>{{/unless}}
+                            {{#if canAddResult}}<button type="button" data-action="add-test-part" data-test-part="result"><i class="fa-solid fa-equals" aria-hidden="true"></i><span>{{localize "DMJ.Board.TestResult"}}</span></button>{{/if}}
+                            {{#unless hasDescription}}<button type="button" data-action="add-test-part" data-test-part="description"><i class="fa-solid fa-align-left" aria-hidden="true"></i><span>{{localize "DMJ.Board.TestDescriptionMenu"}}</span></button>{{/unless}}
+                          </div>
+                        </details>
+                        <div class="dmj-test-description">
+                          {{#if hasDescription}}
+                            <div class="dmj-block-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-block-text data-test-result="description" data-placeholder="{{localize "DMJ.Board.TestDescriptionPlaceholder"}}" aria-label="{{localize "DMJ.Board.TestDescription"}}">{{{descriptionEditorHTML}}}</div>
+                          {{/if}}
+                        </div>
+                      {{/if}}
+                      {{#if isCheck}}<input type="checkbox" data-block-done aria-label="{{localize "DMJ.Board.CheckDone"}}" {{#if done}}checked{{/if}}><div class="dmj-block-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-block-text data-placeholder="{{localize "DMJ.Board.CheckPlaceholder"}}" aria-label="{{localize "DMJ.Board.CheckPlaceholder"}}">{{{editorHTML}}}</div><button type="button" data-action="remove-block" aria-label="{{localize "DMJ.Board.RemoveBlock"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>{{/if}}
+                    </section>
+                  {{/each}}
+                </div>
+              </article>
+            {{/each}}
+          </div>
+          <button type="button" class="dmj-add-card" data-action="add-card" data-column-id="{{id}}"><i class="fa-solid fa-plus" aria-hidden="true"></i> {{localize "DMJ.Board.AddCard"}}</button>
+          <div class="dmj-column-resize-handle" data-column-resize-handle data-resize-axis="width" role="separator" aria-orientation="vertical" aria-valuemin="240" aria-valuemax="900" aria-valuenow="{{width}}" aria-label="{{localize "DMJ.Board.ResizeColumn"}}" title="{{localize "DMJ.Board.ResizeColumn"}}" tabindex="0"></div>
+          <div class="dmj-column-height-resize-handle" data-column-resize-handle data-resize-axis="height" role="separator" aria-orientation="horizontal" aria-valuemin="140" aria-valuemax="1600" aria-valuenow="{{resizeHeight}}" aria-label="{{localize "DMJ.Board.ResizeColumnHeight"}}" title="{{localize "DMJ.Board.ResizeColumnHeight"}}" tabindex="0"></div>
+        </section>
+      {{/each}}
+      <button type="button" class="dmj-add-column" data-action="add-column"><i class="fa-solid fa-plus" aria-hidden="true"></i> {{localize "DMJ.Board.AddColumn"}}</button>
+    </main>
+  {{else}}
+    <div class="dmj-board-empty"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><h2>{{localize "DMJ.Board.EmptyTitle"}}</h2><p>{{localize "DMJ.Board.EmptyKanban"}}</p><button type="button" data-action="add-scene"><i class="fa-solid fa-plus" aria-hidden="true"></i> {{localize "DMJ.Board.AddScene"}}</button></div>
+  {{/if}}
+</div>

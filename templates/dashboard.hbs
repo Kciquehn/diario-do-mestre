@@ -1,0 +1,85 @@
+<div class="dmj-shell">
+  <nav class="dmj-dashboard-tabs" role="tablist" aria-label="{{localize "DMJ.App.Sections"}}">
+    <button id="dmj-dashboard-tab-sessions" type="button" role="tab" class="{{#if sessionsTabActive}}active{{/if}}" data-action="select-dashboard-tab" data-tab="sessions" data-dashboard-tab="sessions" aria-controls="dmj-dashboard-panel-sessions" aria-selected="{{#if sessionsTabActive}}true{{else}}false{{/if}}">
+      <i class="fa-solid fa-book-journal-whills" aria-hidden="true"></i> {{localize "DMJ.App.Title"}}
+    </button>
+    <button id="dmj-dashboard-tab-library" type="button" role="tab" class="{{#if libraryTabActive}}active{{/if}}" data-action="select-dashboard-tab" data-tab="library" data-dashboard-tab="library" aria-controls="dmj-dashboard-panel-library" aria-selected="{{#if libraryTabActive}}true{{else}}false{{/if}}">
+      <i class="fa-solid fa-book-open" aria-hidden="true"></i> {{localize "DMJ.Resource.Library"}}
+    </button>
+  </nav>
+
+  <section id="dmj-dashboard-panel-sessions" class="dmj-dashboard-panel dmj-sessions-panel" role="tabpanel" aria-labelledby="dmj-dashboard-tab-sessions" data-dashboard-panel="sessions" {{#unless sessionsTabActive}}hidden{{/unless}}>
+    <header class="dmj-hero">
+      <div>
+        <p class="dmj-kicker">{{localize "DMJ.App.Kicker"}}</p>
+        <h1>{{worldTitle}}</h1>
+        <p>{{localize "DMJ.App.Intro"}}</p>
+      </div>
+      <i class="fa-solid fa-feather-pointed" aria-hidden="true"></i>
+    </header>
+
+    <section class="dmj-toolbar">
+      <div>
+        <strong>{{localize "DMJ.Session.Planning"}}</strong>
+        <span>{{sessionCount}} {{sessionCountLabel}}</span>
+      </div>
+    </section>
+
+    <section class="dmj-create">
+      <label for="dmj-session-search">{{localize "DMJ.Session.Search"}}</label>
+      <div class="dmj-input-row">
+        <input id="dmj-session-search" type="search" data-session-search value="{{sessionQuery}}" placeholder="{{localize "DMJ.Session.SearchPlaceholder"}}">
+        <button type="button" data-action="create-session"><i class="fa-solid fa-plus" aria-hidden="true"></i> {{localize "DMJ.Session.Add"}}</button>
+      </div>
+    </section>
+
+    <main class="dmj-sessions">
+      {{#if sessionEmpty}}
+        <div class="dmj-empty">
+          <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+          <h2>{{localize "DMJ.Empty.Title"}}</h2>
+          <p>{{localize "DMJ.Empty.Text"}}</p>
+        </div>
+      {{else}}
+        <div class="dmj-session-list">
+          {{#each sessions}}
+            <button type="button" data-action="open-session" data-page-id="{{id}}" title="{{localize "DMJ.Session.ContextHint"}}">
+              <i class="fa-regular fa-file-lines" aria-hidden="true"></i>
+              <span class="dmj-session-name">{{name}}</span>
+              <small class="dmj-session-status {{status}}">{{statusLabel}}</small>
+              {{#if date}}<time datetime="{{date}}">{{date}}</time>{{/if}}
+            </button>
+          {{/each}}
+        </div>
+        <div class="dmj-empty" data-session-filter-empty hidden>
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <h2>{{localize "DMJ.Session.FilterEmpty"}}</h2>
+        </div>
+      {{/if}}
+    </main>
+  </section>
+
+  <section id="dmj-dashboard-panel-library" class="dmj-dashboard-panel dmj-library-shell" role="tabpanel" aria-labelledby="dmj-dashboard-tab-library" data-dashboard-panel="library" {{#unless libraryTabActive}}hidden{{/unless}}>
+    <header class="dmj-library-hero">
+      <div><p>{{localize "DMJ.Resource.Kicker"}}</p><h1>{{localize "DMJ.Resource.Library"}}</h1><span>{{localize "DMJ.Resource.Intro"}}</span></div>
+      <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+    </header>
+    <div class="dmj-resource-toolbar">
+      <select data-resource-kind-filter aria-label="{{localize "DMJ.Resource.FilterType"}}">
+        {{#each resourceKinds}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+      </select>
+      <input type="search" data-resource-search value="{{filterQuery}}" placeholder="{{localize "DMJ.Resource.SearchPlaceholder"}}" aria-label="{{localize "DMJ.Resource.Search"}}">
+      <button type="button" data-action="create-resource"><i class="fa-solid fa-plus" aria-hidden="true"></i> {{localize "DMJ.Resource.Create"}}</button>
+    </div>
+    <main class="dmj-resource-grid">
+      {{#if resourceEmpty}}<div class="dmj-resource-empty"><i class="fa-solid fa-book-open" aria-hidden="true"></i><h2>{{localize "DMJ.Resource.Empty"}}</h2></div>{{/if}}
+      {{#unless resourceEmpty}}<div class="dmj-resource-empty" data-resource-filter-empty hidden><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><h2>{{localize "DMJ.Resource.FilterEmpty"}}</h2></div>{{/unless}}
+      {{#each resources}}
+        <button type="button" class="dmj-resource-tile" data-action="open-resource" data-page-id="{{id}}" data-resource-kind="{{kind}}" title="{{localize "DMJ.Resource.ContextHint"}}">
+          {{#if image}}<img src="{{image}}" alt="">{{else}}<i class="fa-solid {{icon}}" aria-hidden="true"></i>{{/if}}
+          <span><strong>{{name}}</strong><small>{{kindLabel}}</small></span>
+        </button>
+      {{/each}}
+    </main>
+  </section>
+</div>

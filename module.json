@@ -1,0 +1,32 @@
+{
+  "id": "diario-do-mestre",
+  "title": "Diário do Mestre",
+  "description": "Um diário privado para o mestre preparar sessões, personagens, locais, encontros e recompensas.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "13"
+  },
+  "authors": [
+    {
+      "name": "Kaciquehn"
+    }
+  ],
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/diario-do-mestre.css"
+  ],
+  "languages": [
+    {
+      "lang": "pt-BR",
+      "name": "Português (Brasil)",
+      "path": "lang/pt-BR.json"
+    },
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ]
+}
