@@ -14,27 +14,44 @@ export function getElementWindow(element) {
 
 function getPopoutAPI() {
   if (!game.modules.get(POPOUT_MODULE_ID)?.active) return null;
-  return typeof PopoutModule !== "undefined" && typeof PopoutModule.popoutApp === "function"
-    ? PopoutModule
+  const api = typeof PopoutModule !== "undefined" ? PopoutModule : globalThis.PopoutModule;
+  return typeof api?.popoutApp === "function"
+    ? api
     : null;
 }
 
-export function isPopoutAvailable() {
-  return Boolean(getPopoutAPI());
+function hasNativeDetach(app) {
+  return typeof app?.detachWindow === "function";
 }
 
-export function popoutApplication(app) {
-  const api = getPopoutAPI();
-  if (!api) {
-    ui.notifications.warn(game.i18n.localize("DMJ.Popout.Unavailable"));
-    return false;
-  }
+export function isPopoutAvailable(app) {
+  return hasNativeDetach(app) || Boolean(getPopoutAPI());
+}
+
+export async function popoutApplication(app) {
   if (!app?.rendered) {
     ui.notifications.warn(game.i18n.localize("DMJ.Popout.RenderFirst"));
     return false;
   }
-  api.popoutApp(app);
-  return true;
+
+  try {
+    if (hasNativeDetach(app)) {
+      await app.detachWindow();
+      return true;
+    }
+
+    const api = getPopoutAPI();
+    if (!api) {
+      ui.notifications.warn(game.i18n.localize("DMJ.Popout.Unavailable"));
+      return false;
+    }
+    api.popoutApp(app);
+    return true;
+  } catch (error) {
+    console.error(`${MODULE_ID} | PopOut`, error);
+    ui.notifications.error(game.i18n.localize("DMJ.Popout.Error"));
+    return false;
+  }
 }
 
 export function registerPopoutCompatibility() {

@@ -77,6 +77,16 @@ export class ResourceLibrary extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#activate(node);
   }
 
+  _onDetach(from, to) {
+    super._onDetach?.(from, to);
+    this.onPopoutLoaded(this.element);
+  }
+
+  _onAttach(from, to) {
+    super._onAttach?.(from, to);
+    this.onPopoutLoaded(this.element);
+  }
+
   _onClose(options) {
     this.#closeContextMenu();
     this.listenerController?.abort();

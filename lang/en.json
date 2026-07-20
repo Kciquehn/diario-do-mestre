@@ -185,6 +185,7 @@
   "DMJ.Popout.OpenMonitor": "Another monitor",
   "DMJ.Popout.Unavailable": "The PopOut! module is not active.",
   "DMJ.Popout.RenderFirst": "Open the window before detaching it with PopOut!.",
+  "DMJ.Popout.Error": "The Game Master's Journal window could not be detached.",
   "DMJ.Resource.Drop": "Drop a Foundry Actor or Item here",
   "DMJ.Resource.Notes": "Private notes",
   "DMJ.Resource.EditorPlaceholder": "Write or type / for commands and @ to mention...",

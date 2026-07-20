@@ -2,6 +2,8 @@ import { DOCUMENT_TYPES, FLAGS, MODULE_ID, RESOURCE_KINDS } from "../constants.j
 import { DiaryService } from "./diary-service.js";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 
+const DOCUMENT_UUID_PATTERN = /^[A-Za-z0-9._-]{1,500}$/;
+
 export const RESOURCE_FIELDS = Object.freeze({
   person: ["role", "appearance", "personality", "motivation", "secrets"],
   place: ["region", "atmosphere", "features", "inhabitants", "secrets"],
@@ -102,7 +104,8 @@ export class ResourceService {
 
   static async updateResource(page, formData) {
     requireGameMaster();
-    if (!page || page.getFlag(MODULE_ID, FLAGS.TYPE) !== DOCUMENT_TYPES.RESOURCE) {
+    const diary = DiaryService.getDiary();
+    if (!diary || !page || page.parent?.id !== diary.id || !diary.pages.has(page.id) || page.getFlag(MODULE_ID, FLAGS.TYPE) !== DOCUMENT_TYPES.RESOURCE) {
       throw new Error(game.i18n.localize("DMJ.Resource.Error.Invalid"));
     }
     const rawKind = page.getFlag(MODULE_ID, "kind");
@@ -115,8 +118,10 @@ export class ResourceService {
     }));
     const data = {
       name,
-      image: String(formData.get("image") ?? "").trim(),
-      linkedUuid: String(formData.get("linkedUuid") ?? "").trim(),
+      image: String(formData.get("image") ?? "").trim().slice(0, 2000),
+      linkedUuid: DOCUMENT_UUID_PATTERN.test(String(formData.get("linkedUuid") ?? "").trim())
+        ? String(formData.get("linkedUuid") ?? "").trim()
+        : "",
       ...richFields
     };
     await page.update({ name, "text.content": resourceContent(kind, data) });

@@ -136,6 +136,16 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     this.#applyActiveTab();
   }
 
+  _onDetach(from, to) {
+    super._onDetach?.(from, to);
+    this.onPopoutLoaded(this.element);
+  }
+
+  _onAttach(from, to) {
+    super._onAttach?.(from, to);
+    this.onPopoutLoaded(this.element);
+  }
+
   async _preClose(options) {
     for (const view of this.workspaceViews.values()) await view.controller.unmount?.();
     await super._preClose(options);
@@ -447,7 +457,7 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     openButton.append(icon, label);
     openButton.addEventListener("click", () => void this.#detachWorkspace(view.key), listenerOptions);
     menu.append(openButton);
-    if (isPopoutAvailable()) {
+    if (isPopoutAvailable(this)) {
       const popoutButton = this.#document().createElement("button");
       popoutButton.type = "button";
       popoutButton.setAttribute("role", "menuitem");
@@ -459,7 +469,7 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
       popoutButton.append(popoutIcon, popoutLabel);
       popoutButton.addEventListener("click", () => {
         this.#closeContextMenu();
-        popoutApplication(this);
+        void popoutApplication(this);
       }, listenerOptions);
       menu.append(popoutButton);
     }

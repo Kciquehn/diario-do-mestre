@@ -6,6 +6,12 @@ import { getElementDocument, isPopoutAvailable, popoutApplication, registerPopou
 
 let dashboard;
 
+function requireGameMasterUI() {
+  if (game.user?.isGM) return true;
+  ui.notifications.warn(game.i18n.localize("DMJ.Error.GMOnly"));
+  return false;
+}
+
 function injectJournalLauncher(app, html) {
   if (!game.user?.isGM) return;
 
@@ -50,28 +56,37 @@ Hooks.once("setup", () => {
   const module = game.modules.get(MODULE_ID);
   module.api = Object.freeze({
     open() {
+      if (!requireGameMasterUI()) return null;
       dashboard ??= new SessionDashboard();
       dashboard.activateTab("sessions");
       return dashboard.render({ force: true });
     },
-    getDiary: DiaryService.getDiary.bind(DiaryService),
-    getSessions: DiaryService.getSessions.bind(DiaryService),
+    getDiary() {
+      return game.user?.isGM ? DiaryService.getDiary() : null;
+    },
+    getSessions() {
+      return game.user?.isGM ? DiaryService.getSessions() : [];
+    },
     openLibrary() {
+      if (!requireGameMasterUI()) return null;
       dashboard ??= new SessionDashboard();
       dashboard.activateTab("library");
       return dashboard.render({ force: true });
     },
     async openSession(page) {
+      if (!requireGameMasterUI()) return null;
       dashboard ??= new SessionDashboard();
       if (!dashboard.rendered) await dashboard.render({ force: true });
       return dashboard.openSession(page);
     },
     async openBoard(page) {
+      if (!requireGameMasterUI()) return null;
       dashboard ??= new SessionDashboard();
       if (!dashboard.rendered) await dashboard.render({ force: true });
       return dashboard.openBoard(page);
     },
     async openResource(page) {
+      if (!requireGameMasterUI()) return null;
       dashboard ??= new SessionDashboard();
       if (!dashboard.rendered) await dashboard.render({ force: true });
       return dashboard.openResource(page);
@@ -85,7 +100,10 @@ Hooks.once("setup", () => {
       return dashboard.refreshResourceTile(page);
     },
     isPopoutAvailable,
-    popout: popoutApplication
+    popout(app) {
+      if (!requireGameMasterUI()) return false;
+      return popoutApplication(app);
+    }
   });
 });
 

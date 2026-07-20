@@ -81,6 +81,16 @@ export class SessionPlanner extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#activate(this.embeddedRoot ?? node);
   }
 
+  _onDetach(from, to) {
+    super._onDetach?.(from, to);
+    this.onPopoutLoaded(this.element);
+  }
+
+  _onAttach(from, to) {
+    super._onAttach?.(from, to);
+    this.onPopoutLoaded(this.element);
+  }
+
   #activate(root) {
     this.listenerController?.abort();
     this.listenerController = new (getElementWindow(root).AbortController)();

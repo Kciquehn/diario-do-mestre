@@ -1,0 +1,14 @@
+{
+  "name": "diario-do-mestre",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ferramentas locais de validação e empacotamento do módulo Diário do Mestre.",
+  "scripts": {
+    "validate": "node tools/validate.mjs",
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/build-release.ps1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

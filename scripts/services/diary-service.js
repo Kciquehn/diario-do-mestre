@@ -24,6 +24,7 @@ const MAX_COLUMN_HEIGHT = 1600;
 const MAX_SCENE_LINKS = 100;
 const DOCUMENT_UUID_PATTERN = /^[A-Za-z0-9._-]{1,500}$/;
 const SCENE_LINK_DOCUMENT_NAMES = Object.freeze(["Actor", "Item", "JournalEntryPage"]);
+let diaryCreationPromise = null;
 
 function requireGameMaster() {
   if (!game.user?.isGM) throw new Error(game.i18n.localize("DMJ.Error.GMOnly"));
@@ -389,11 +390,17 @@ export class DiaryService {
     const existing = this.getDiary();
     if (existing) return existing;
 
-    return JournalEntry.implementation.create({
+    diaryCreationPromise ??= JournalEntry.implementation.create({
       name: game.i18n.format("DMJ.Diary.Name", { world: game.world.title }),
       ownership: { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE },
       flags: { [MODULE_ID]: { [FLAGS.TYPE]: DOCUMENT_TYPES.DIARY } }
     });
+    const pendingCreation = diaryCreationPromise;
+    try {
+      return await pendingCreation;
+    } finally {
+      if (diaryCreationPromise === pendingCreation) diaryCreationPromise = null;
+    }
   }
 
   static async addSession(rawName) {
@@ -426,7 +433,8 @@ export class DiaryService {
 
   static async updateSession(page, formData) {
     requireGameMaster();
-    if (!page || page.getFlag(MODULE_ID, FLAGS.TYPE) !== DOCUMENT_TYPES.SESSION) {
+    const diary = this.getDiary();
+    if (!diary || !page || page.parent?.id !== diary.id || !diary.pages.has(page.id) || page.getFlag(MODULE_ID, FLAGS.TYPE) !== DOCUMENT_TYPES.SESSION) {
       throw new Error(game.i18n.localize("DMJ.Error.InvalidSession"));
     }
 
@@ -447,7 +455,8 @@ export class DiaryService {
 
   static async updateBoard(page, board) {
     requireGameMaster();
-    if (!page || page.getFlag(MODULE_ID, FLAGS.TYPE) !== DOCUMENT_TYPES.SESSION) {
+    const diary = this.getDiary();
+    if (!diary || !page || page.parent?.id !== diary.id || !diary.pages.has(page.id) || page.getFlag(MODULE_ID, FLAGS.TYPE) !== DOCUMENT_TYPES.SESSION) {
       throw new Error(game.i18n.localize("DMJ.Error.InvalidSession"));
     }
 

@@ -185,6 +185,7 @@
   "DMJ.Popout.OpenMonitor": "Outro monitor",
   "DMJ.Popout.Unavailable": "O módulo PopOut! não está ativo.",
   "DMJ.Popout.RenderFirst": "Abra a janela antes de destacá-la com o PopOut!.",
+  "DMJ.Popout.Error": "Não foi possível destacar a janela do Diário do Mestre.",
   "DMJ.Resource.Drop": "Arraste aqui um Ator ou Item do Foundry",
   "DMJ.Resource.Notes": "Anotações privadas",
   "DMJ.Resource.EditorPlaceholder": "Escreva ou digite / para comandos e @ para mencionar...",

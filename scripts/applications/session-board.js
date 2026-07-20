@@ -190,7 +190,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
       scenes,
       activeScene,
       hasScenes: Boolean(activeScene),
-      popoutAvailable: isPopoutAvailable(),
+      popoutAvailable: isPopoutAvailable(this.workspaceHost ?? this),
       boardHelpId: `dmj-board-help-${this.page.id}`
     };
   }
@@ -275,6 +275,16 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
 
   onPopoutLoaded(node) {
     this.#activate(this.embeddedRoot ?? node);
+  }
+
+  _onDetach(from, to) {
+    super._onDetach?.(from, to);
+    this.onPopoutLoaded(this.element);
+  }
+
+  _onAttach(from, to) {
+    super._onAttach?.(from, to);
+    this.onPopoutLoaded(this.element);
   }
 
   #activate(root) {
@@ -1662,7 +1672,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     if (name === "insert-slash-block") {
       this.#insertSlashBlock(action.dataset.blockType);
     } else if (name === "popout-workspace") {
-      popoutApplication(this.workspaceHost ?? this);
+      void popoutApplication(this.workspaceHost ?? this);
     } else if (name === "add-scene-link") {
       this.#showSceneLinkMenu(action);
     } else if (name === "open-scene-link") {

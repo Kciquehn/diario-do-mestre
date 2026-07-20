@@ -1,0 +1,47 @@
+name: Publicar release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validar fontes e manifesto
+        run: npm run validate
+
+      - name: Conferir versão da tag
+        shell: pwsh
+        run: |
+          $version = (Get-Content module.json -Raw | ConvertFrom-Json).version
+          if ("v$version" -ne "${{ github.ref_name }}") {
+            throw "A tag ${{ github.ref_name }} não corresponde à versão v$version do module.json."
+          }
+
+      - name: Montar pacote do Foundry
+        run: npm run build
+
+      - name: Criar GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" `
+            "dist/diario-do-mestre.zip" `
+            "dist/module.json" `
+            --verify-tag `
+            --title "Diário do Mestre ${{ github.ref_name }}" `
+            --generate-notes

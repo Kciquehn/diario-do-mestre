@@ -1,36 +1,91 @@
 # Diário do Mestre
 
-Módulo para Foundry VTT v13 e v14 que organiza a preparação das sessões do mundo atual.
+Módulo privado e independente de sistema para preparar aventuras e consultar o roteiro durante uma sessão no Foundry Virtual Tabletop.
+
+## Recursos
+
+- uma única janela com abas para aventuras, biblioteca, preparação e roteiro;
+- roteiro visual dividido em cenas, colunas e cartões;
+- texto rico com `Ctrl+B` para negrito e `Ctrl+I` para itálico;
+- comandos `/diálogo`, `/seleção` e `/teste`;
+- testes configuráveis com sucesso, falha, resultados numéricos e descrição;
+- menções com `@` para registros da biblioteca, Atores e Itens;
+- vínculos persistentes por UUID, sem duplicar Documents do sistema;
+- biblioteca de personagens, locais, itens, encontros e facções;
+- imagens escolhidas pelo File Picker e abertas no visualizador do Foundry;
+- salvamento automático do roteiro e das fichas da biblioteca;
+- colunas redimensionáveis pelas bordas direita e inferior;
+- integração opcional com PopOut no Foundry v13 e janelas destacáveis nativas no v14.
+
+## Compatibilidade
+
+- Foundry VTT v13 como versão mínima e atualmente verificada;
+- fluxo preparado para Foundry VTT v14 usando as APIs públicas comuns e o destacamento nativo de `ApplicationV2`;
+- qualquer sistema de jogo;
+- interface exclusiva do mestre.
+
+O manifesto permanecerá com `verified: 13` até a validação manual completa no Foundry v14.
+
+## Instalação
+
+Depois que a primeira GitHub Release estiver publicada, use este manifesto no instalador de módulos do Foundry:
+
+```text
+https://github.com/Kciquehn/diario-do-mestre/releases/latest/download/module.json
+```
+
+Para instalação manual, baixe `diario-do-mestre.zip` na página de releases e extraia o conteúdo na pasta `Data/modules/diario-do-mestre`.
 
 ## Uso
 
-1. Ative o módulo no mundo.
-2. Como mestre, abra a aba **Diário** e clique em **Abrir Diário do Mestre** no rodapé. O mesmo painel também está disponível em **Configurações do módulo**.
-3. Crie uma aventura e use o preparador próprio do módulo para definir objetivo, abertura, cenas, personagens, locais, encontros, itens, pistas, improvisos e notas finais.
-4. Salve a preparação pelo botão no rodapé do preparador.
+1. Ative **Diário do Mestre** no mundo.
+2. Entre como mestre e abra a aba **Diário** da barra lateral.
+3. Clique em **Abrir Diário do Mestre**.
+4. Crie uma aventura e abra seu preparador ou roteiro.
+5. Use a Biblioteca do Mestre para guardar referências reutilizáveis.
 
-A interface funciona em uma única janela. Diário, Biblioteca, aventuras, roteiros e fichas próprias do módulo são organizados em abas no topo; visualizadores de imagem e fichas nativas de `Actor` ou `Item` continuam usando as aplicações próprias do Foundry.
+As aventuras e fichas são páginas de um `JournalEntry` criado pelo módulo. Sua propriedade padrão é `NONE`, portanto o conteúdo não é compartilhado com jogadores. Todas as operações de escrita e exclusão também verificam se o usuário é mestre.
 
-## Roteiro da Sessão
+## Roteiro e comandos
 
-Dentro do preparador, o botão **Roteiro da Sessão** abre uma aba interna com um quadro no estilo Trello. Cada cena vira uma aba no topo e pode receber colunas e cartões de texto. O mestre pode escrever ou colar trechos inteiros de uma aventura e digitar `/` em uma linha vazia para inserir uma **Caixa de diálogo** ou uma **Caixa de seleção**. Os cartões continuam podendo ser arrastados para outra posição ou coluna.
+Digite `/` em um campo de texto para abrir o menu de blocos:
 
-Cada mundo possui apenas um Diário do Mestre. Ele é criado automaticamente com a primeira sessão como um `JournalEntry` de propriedade padrão `NONE`, sem compartilhamento com jogadores. O documento nativo funciona apenas como armazenamento e fallback legível; a experiência principal é a interface própria do módulo.
+- **Diálogo:** trecho destacado e em itálico;
+- **Seleção:** item marcável; `Enter` cria o próximo item;
+- **Teste:** bloco com título e resultados opcionais.
 
-## Biblioteca do Mestre
+Digite `@` para procurar registros da Biblioteca do Mestre. Também é possível arrastar um `Actor` ou `Item` do Foundry para o editor. As referências são persistidas por UUID.
 
-A Biblioteca do Mestre guarda referências reutilizáveis do mundo em fichas próprias:
+## Outro monitor
 
-- personagens;
-- locais;
-- itens;
-- encontros;
-- facções.
+No Foundry v13, ative o módulo opcional **PopOut!** e acesse o Foundry por um navegador comum, como `http://localhost:30000`. O PopOut não funciona dentro do aplicativo desktop Electron.
 
-Cada ficha possui campos adequados ao tipo, imagem, notas privadas e pode ser vinculada a um `Actor` ou `Item` real arrastado do Foundry. O vínculo usa UUID e não duplica o Document original.
+No Foundry v14, o Diário usa o destacamento nativo de janelas. O botão **Outro monitor** destaca a janela unificada mantendo a aba atual aberta.
 
-## PopOut! e outros monitores
+## Desenvolvimento
 
-Quando o módulo **PopOut!** estiver ativo, o Roteiro da Sessão exibe o botão **Outro monitor**. Ele destaca a janela unificada do Diário do Mestre mantendo aberta a aba atual. O menu de contexto das abas internas também oferece essa opção.
+O projeto não possui dependências de runtime ou de build.
 
-O PopOut! funciona quando o Foundry é acessado por um navegador comum, como `http://localhost:30000`; ele não funciona dentro do aplicativo desktop Electron. No Foundry v14, o suporte nativo a janelas destacadas continua disponível pelas opções da própria janela.
+```powershell
+npm run validate
+npm run build
+```
+
+- `npm run validate` confere manifesto, caminhos, idiomas, imports, sintaxe JavaScript, blocos Handlebars, codificação e APIs proibidas;
+- `npm run build` repete a validação e cria `dist/diario-do-mestre.zip` e `dist/module.json`.
+
+## Publicação
+
+O workflow `.github/workflows/release.yml` publica automaticamente os dois arquivos de `dist` quando uma tag compatível com a versão do manifesto é enviada:
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+O repositório precisa existir em `https://github.com/Kciquehn/diario-do-mestre` antes do primeiro push. Não crie a tag antes de concluir o teste manual da versão correspondente.
+
+## Relatórios e alterações
+
+- Problemas: <https://github.com/Kciquehn/diario-do-mestre/issues>
+- Histórico: [CHANGELOG.md](CHANGELOG.md)
