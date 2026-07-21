@@ -3,6 +3,7 @@ import { DiaryService } from "./diary-service.js";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 
 const DOCUMENT_UUID_PATTERN = /^[A-Za-z0-9._-]{1,500}$/;
+const IMAGE_FRAMING_DEFAULTS = Object.freeze({ imagePositionX: 50, imagePositionY: 50, imageZoom: 100 });
 
 export const RESOURCE_FIELDS = Object.freeze({
   person: ["role", "appearance", "personality", "motivation", "secrets"],
@@ -33,9 +34,24 @@ function fieldHTML(data, field) {
   return sanitizeRichTextHTML(data[`${field}HTML`] ?? plainTextToRichHTML(data[field]));
 }
 
+function boundedNumber(value, minimum, maximum, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(maximum, Math.max(minimum, Math.round(number)));
+}
+
+function imageFraming(data = {}) {
+  return {
+    imagePositionX: boundedNumber(data.imagePositionX, 0, 100, IMAGE_FRAMING_DEFAULTS.imagePositionX),
+    imagePositionY: boundedNumber(data.imagePositionY, 0, 100, IMAGE_FRAMING_DEFAULTS.imagePositionY),
+    imageZoom: boundedNumber(data.imageZoom, 100, 300, IMAGE_FRAMING_DEFAULTS.imageZoom)
+  };
+}
+
 function resourceContent(kind, data) {
+  const framing = imageFraming(data);
   const fields = RESOURCE_FIELDS[kind].map((field) => `<section data-dmj-resource-field="${field}"><h2>${game.i18n.localize(`DMJ.Resource.Field.${kind}.${field}`)}</h2><p>${fieldHTML(data, field)}</p></section>`).join("\n");
-  return `<article data-dmj-resource data-kind="${kind}" data-image="${escapeHTML(data.image)}" data-linked-uuid="${escapeHTML(data.linkedUuid)}"><h1>${escapeHTML(data.name)}</h1>${fields}<section data-dmj-resource-field="notes"><h2>${game.i18n.localize("DMJ.Resource.Notes")}</h2><p>${fieldHTML(data, "notes")}</p></section></article>`;
+  return `<article data-dmj-resource data-kind="${kind}" data-image="${escapeHTML(data.image)}" data-image-position-x="${framing.imagePositionX}" data-image-position-y="${framing.imagePositionY}" data-image-zoom="${framing.imageZoom}" data-linked-uuid="${escapeHTML(data.linkedUuid)}"><h1>${escapeHTML(data.name)}</h1>${fields}<section data-dmj-resource-field="notes"><h2>${game.i18n.localize("DMJ.Resource.Notes")}</h2><p>${fieldHTML(data, "notes")}</p></section></article>`;
 }
 
 export class ResourceService {
@@ -52,6 +68,7 @@ export class ResourceService {
       name: page?.name ?? "",
       kind,
       image: "",
+      ...IMAGE_FRAMING_DEFAULTS,
       linkedUuid: "",
       notes: "",
       notesHTML: "",
@@ -63,6 +80,11 @@ export class ResourceService {
     const root = document.querySelector("[data-dmj-resource]");
     if (!root) return data;
     data.image = root.dataset.image ?? "";
+    Object.assign(data, imageFraming({
+      imagePositionX: root.dataset.imagePositionX,
+      imagePositionY: root.dataset.imagePositionY,
+      imageZoom: root.dataset.imageZoom
+    }));
     data.linkedUuid = root.dataset.linkedUuid ?? "";
     for (const field of [...RESOURCE_FIELDS[kind], "notes"]) {
       const content = root.querySelector(`[data-dmj-resource-field="${field}"] p`);
@@ -80,7 +102,7 @@ export class ResourceService {
     const name = cleanName(rawName);
     if (!name) throw new Error(game.i18n.localize("DMJ.Resource.Error.Name"));
     const diary = await DiaryService.getOrCreateDiary();
-    const data = { name, image: "", linkedUuid: "", notes: "", notesHTML: "", ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]])) };
+    const data = { name, image: "", ...IMAGE_FRAMING_DEFAULTS, linkedUuid: "", notes: "", notesHTML: "", ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]])) };
     const maxSort = Math.max(0, ...diary.pages.map((page) => page.sort ?? 0));
     const [page] = await diary.createEmbeddedDocuments("JournalEntryPage", [{
       name,
@@ -119,6 +141,11 @@ export class ResourceService {
     const data = {
       name,
       image: String(formData.get("image") ?? "").trim().slice(0, 2000),
+      ...imageFraming({
+        imagePositionX: formData.get("imagePositionX"),
+        imagePositionY: formData.get("imagePositionY"),
+        imageZoom: formData.get("imageZoom")
+      }),
       linkedUuid: DOCUMENT_UUID_PATTERN.test(String(formData.get("linkedUuid") ?? "").trim())
         ? String(formData.get("linkedUuid") ?? "").trim()
         : "",

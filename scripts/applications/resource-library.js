@@ -42,7 +42,9 @@ export class ResourceLibrary extends HandlebarsApplicationMixin(ApplicationV2) {
         kind: data.kind,
         kindLabel: game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`),
         icon: KIND_ICONS[data.kind],
-        image: data.image || linked?.img || ""
+        image: data.image || linked?.img || "",
+        imagePositionX: data.imagePositionX,
+        imagePositionY: data.imagePositionY
       };
     }));
     const kinds = [

@@ -15,7 +15,7 @@
     {{#unless empty}}<div class="dmj-resource-empty" data-resource-filter-empty hidden><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><h2>{{localize "DMJ.Resource.FilterEmpty"}}</h2></div>{{/unless}}
     {{#each resources}}
       <button type="button" class="dmj-resource-tile" data-action="open-resource" data-page-id="{{id}}" data-resource-kind="{{kind}}" title="{{localize "DMJ.Resource.ContextHint"}}">
-        {{#if image}}<img src="{{image}}" alt="">{{else}}<i class="fa-solid {{icon}}" aria-hidden="true"></i>{{/if}}
+        {{#if image}}<img src="{{image}}" alt="" style="object-position: {{imagePositionX}}% {{imagePositionY}}%;">{{else}}<i class="fa-solid {{icon}}" aria-hidden="true"></i>{{/if}}
         <span><strong>{{name}}</strong><small>{{kindLabel}}</small></span>
       </button>
     {{/each}}

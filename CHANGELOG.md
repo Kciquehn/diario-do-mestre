@@ -2,6 +2,18 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.2.0 - 2026-07-21
+
+### Adicionado
+
+- ajuste de enquadramento das imagens da Biblioteca do Mestre, com zoom e posição horizontal e vertical salvos automaticamente por ficha;
+- ação para restaurar o enquadramento central sem alterar o arquivo original da imagem.
+
+### Alterado
+
+- contraste do estado vazio da biblioteca e do botão de criação de registros;
+- miniaturas da biblioteca agora respeitam a posição escolhida na ficha.
+
 ## 1.1.2 - 2026-07-21
 
 ### Corrigido

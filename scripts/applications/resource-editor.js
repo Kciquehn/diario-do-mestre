@@ -65,6 +65,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       notesHTML: sanitizeRichTextHTML(data.notesHTML ?? plainTextToRichHTML(data.notes)),
       preview: data.image || linked?.img || "icons/svg/mystery-man.svg",
       fallbackPreview: linked?.img || "icons/svg/mystery-man.svg",
+      imageZoomScale: data.imageZoom / 100,
       linkedName: linked?.name,
       linkedType: linked?.documentName,
       hasLinked: Boolean(linked)
@@ -127,6 +128,12 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     }, listenerOptions);
     portrait.addEventListener("contextmenu", (event) => this.#openImageContextMenu(event, portrait), listenerOptions);
     form.elements.image.addEventListener("input", () => this.#updateImagePreview(form), listenerOptions);
+    for (const input of form.querySelectorAll("[data-image-framing-input]")) {
+      input.addEventListener("input", () => this.#applyImageFraming(form), listenerOptions);
+    }
+    form.querySelector("[data-action='close-image-framing']")?.addEventListener("click", () => this.#closeImageFramingControls(form), listenerOptions);
+    form.querySelector("[data-action='reset-image-framing']")?.addEventListener("click", () => this.#resetImageFraming(form), listenerOptions);
+    this.#applyImageFraming(form);
     this.#setAutosaveStatus(this.autosaveState);
   }
 
@@ -212,7 +219,22 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       this.#closeImageContextMenu();
       void this.#selectImage(portrait);
     }, listenerOptions);
-    menu.append(changeButton);
+
+    const adjustButton = this.#document().createElement("button");
+    adjustButton.type = "button";
+    adjustButton.setAttribute("role", "menuitem");
+    const adjustIcon = this.#document().createElement("i");
+    adjustIcon.className = "fa-solid fa-crop-simple";
+    adjustIcon.setAttribute("aria-hidden", "true");
+    const adjustLabel = this.#document().createElement("span");
+    adjustLabel.textContent = game.i18n.localize("DMJ.Resource.AdjustImage");
+    adjustButton.append(adjustIcon, adjustLabel);
+    adjustButton.addEventListener("click", (clickEvent) => {
+      clickEvent.preventDefault();
+      this.#closeImageContextMenu();
+      this.#openImageFramingControls(portrait.closest("form"));
+    }, listenerOptions);
+    menu.append(changeButton, adjustButton);
     this.#document().body.append(menu);
 
     const bounds = menu.getBoundingClientRect();
@@ -257,6 +279,41 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     const preview = form.querySelector(".dmj-resource-portrait img");
     const selectedPath = form.elements.image.value.trim();
     preview.src = selectedPath || preview.dataset.fallback;
+  }
+
+  #openImageFramingControls(form) {
+    const controls = form?.querySelector("[data-image-framing-controls]");
+    if (!controls) return;
+    controls.hidden = false;
+    controls.querySelector("[data-image-framing-input]")?.focus();
+  }
+
+  #closeImageFramingControls(form) {
+    const controls = form?.querySelector("[data-image-framing-controls]");
+    if (controls) controls.hidden = true;
+  }
+
+  #applyImageFraming(form) {
+    const preview = form?.querySelector(".dmj-resource-portrait img");
+    if (!preview) return;
+    const positionX = Number(form.elements.imagePositionX?.value ?? 50);
+    const positionY = Number(form.elements.imagePositionY?.value ?? 50);
+    const zoom = Number(form.elements.imageZoom?.value ?? 100);
+    preview.style.setProperty("--dmj-image-position-x", `${positionX}%`);
+    preview.style.setProperty("--dmj-image-position-y", `${positionY}%`);
+    preview.style.setProperty("--dmj-image-zoom", String(zoom / 100));
+    for (const [name, value] of [["imagePositionX", positionX], ["imagePositionY", positionY], ["imageZoom", zoom]]) {
+      const output = form.querySelector(`[data-image-framing-output="${name}"]`);
+      if (output) output.textContent = `${value}%`;
+    }
+  }
+
+  #resetImageFraming(form) {
+    form.elements.imagePositionX.value = "50";
+    form.elements.imagePositionY.value = "50";
+    form.elements.imageZoom.value = "100";
+    this.#applyImageFraming(form);
+    this.#scheduleAutosave();
   }
 
   async #onSubmit(event) {

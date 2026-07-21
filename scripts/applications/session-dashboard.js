@@ -77,7 +77,9 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
         kind: data.kind,
         kindLabel: game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`),
         icon: KIND_ICONS[data.kind],
-        image: data.image || linked?.img || ""
+        image: data.image || linked?.img || "",
+        imagePositionX: data.imagePositionX,
+        imagePositionY: data.imagePositionY
       };
     }));
     const resourceKinds = [
@@ -259,6 +261,7 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
       const preview = currentVisual?.tagName === "IMG" ? currentVisual : this.#document().createElement("img");
       preview.src = image;
       preview.alt = "";
+      preview.style.objectPosition = `${data.imagePositionX}% ${data.imagePositionY}%`;
       if (preview !== currentVisual) {
         if (currentVisual) currentVisual.replaceWith(preview);
         else tile.prepend(preview);
