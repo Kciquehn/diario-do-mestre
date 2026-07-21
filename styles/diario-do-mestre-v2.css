@@ -1,5 +1,5 @@
 /* Compatibilidade com manifestos mantidos em memória por instalações anteriores. */
-@import url("./diario-do-mestre.css?v=1.4.0");
+@import url("./diario-do-mestre.css?v=1.4.1");
 
 .dmj-resource-form[data-resource-kind="city"] .dmj-city-map-panel {
   display: block !important;

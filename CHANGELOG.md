@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.1 - 2026-07-21
+
+### Alterado
+
+- a ficha de Local ganhou um layout editorial com imagem maior, identidade e documento vinculado reunidos no cabeçalho;
+- os campos de conteúdo foram reorganizados em cartões mais legíveis, mantendo duas colunas em telas largas e uma coluna em telas estreitas;
+- o enquadramento de imagem e todos os fluxos de edição, vínculo e salvamento automático foram preservados.
+
 ## 1.4.0 - 2026-07-21
 
 ### Adicionado
