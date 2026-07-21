@@ -23,6 +23,10 @@
         <strong>{{localize "DMJ.Session.Planning"}}</strong>
         <span>{{sessionCount}} {{sessionCountLabel}}</span>
       </div>
+      <div class="dmj-session-view-controls" role="group" aria-label="{{localize "DMJ.Session.ViewMode"}}">
+        <button type="button" class="{{#if sessionCardsView}}active{{/if}}" data-action="set-session-view" data-view-mode="cards" title="{{localize "DMJ.Session.ViewCards"}}" aria-label="{{localize "DMJ.Session.ViewCards"}}" aria-pressed="{{#if sessionCardsView}}true{{else}}false{{/if}}"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i></button>
+        <button type="button" class="{{#if sessionListView}}active{{/if}}" data-action="set-session-view" data-view-mode="list" title="{{localize "DMJ.Session.ViewList"}}" aria-label="{{localize "DMJ.Session.ViewList"}}" aria-pressed="{{#if sessionListView}}true{{else}}false{{/if}}"><i class="fa-solid fa-list" aria-hidden="true"></i></button>
+      </div>
     </section>
 
     <section class="dmj-create">
@@ -41,13 +45,12 @@
           <p>{{localize "DMJ.Empty.Text"}}</p>
         </div>
       {{else}}
-        <div class="dmj-session-list">
+        <div class="dmj-session-list {{sessionViewMode}}">
           {{#each sessions}}
-            <button type="button" data-action="open-session" data-page-id="{{id}}" title="{{localize "DMJ.Session.ContextHint"}}">
-              <i class="fa-regular fa-file-lines" aria-hidden="true"></i>
-              <span class="dmj-session-name">{{name}}</span>
+            <button type="button" class="dmj-session-tile" data-action="open-session" data-page-id="{{id}}" title="{{localize "DMJ.Session.ContextHint"}}">
+              <span class="dmj-session-cover" data-session-cover>{{#if image}}<img src="{{image}}" alt="">{{else}}<i class="fa-solid fa-book-open" aria-hidden="true"></i>{{/if}}</span>
+              <span class="dmj-session-summary"><span class="dmj-session-name">{{name}}</span>{{#if date}}<time datetime="{{date}}">{{date}}</time>{{/if}}</span>
               <small class="dmj-session-status {{status}}">{{statusLabel}}</small>
-              {{#if date}}<time datetime="{{date}}">{{date}}</time>{{/if}}
             </button>
           {{/each}}
         </div>

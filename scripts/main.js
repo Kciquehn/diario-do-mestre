@@ -1,10 +1,50 @@
 import { SessionDashboard } from "./applications/session-dashboard.js";
-import { MODULE_ID } from "./constants.js";
+import { DOCUMENT_TYPES, FLAGS, MODULE_ID, SETTINGS } from "./constants.js";
 import { DiaryService } from "./services/diary-service.js";
+import { CLUE_DRAG_TYPE, ClueService } from "./services/clue-service.js";
 import { getJournalDirectory } from "./compat/journal-directory.js";
 import { getElementDocument, isPopoutAvailable, popoutApplication, registerPopoutCompatibility } from "./compat/popout.js";
 
 let dashboard;
+
+function handleClueCanvasDrop(targetCanvas, data) {
+  if (data?.type !== CLUE_DRAG_TYPE) return;
+  if (!game.user?.isGM) {
+    ui.notifications.warn(game.i18n.localize("DMJ.Error.GMOnly"));
+    return false;
+  }
+  void ClueService.dropOnCanvas(targetCanvas, data).catch((error) => {
+    console.error(`${MODULE_ID} | Failed to create a private clue Note`, error);
+    ui.notifications.error(error?.message || game.i18n.localize("DMJ.Clue.Invalid"));
+  });
+  return false;
+}
+
+function handleClueNoteActivation(note) {
+  const document = note?.document;
+  if (document?.getFlag(MODULE_ID, "clue") !== true) return;
+  if (!game.user?.isGM) return false;
+
+  const sourceSessionPageId = String(document.getFlag(MODULE_ID, "sourceSessionPageId") ?? "");
+  const sourceBlockId = String(document.getFlag(MODULE_ID, "sourceBlockId") ?? "");
+  const diary = DiaryService.getDiary();
+  const page = diary?.pages.get(sourceSessionPageId);
+  if (!page || page.getFlag(MODULE_ID, FLAGS.TYPE) !== DOCUMENT_TYPES.SESSION) {
+    ui.notifications.error(game.i18n.localize("DMJ.Clue.Invalid"));
+    return false;
+  }
+
+  const api = game.modules.get(MODULE_ID)?.api;
+  if (typeof api?.openBoard !== "function") {
+    ui.notifications.error(game.i18n.localize("DMJ.Clue.Invalid"));
+    return false;
+  }
+  void Promise.resolve(api.openBoard(page, { focusBlockId: sourceBlockId })).catch((error) => {
+    console.error(`${MODULE_ID} | Failed to open a clue in the Game Master's Journal`, error);
+    ui.notifications.error(error?.message || game.i18n.localize("DMJ.Clue.Invalid"));
+  });
+  return false;
+}
 
 function requireGameMasterUI() {
   if (game.user?.isGM) return true;
@@ -42,6 +82,16 @@ function injectJournalLauncher(app, html) {
 
 Hooks.once("init", () => {
   registerPopoutCompatibility();
+  Hooks.on("dropCanvasData", handleClueCanvasDrop);
+  Hooks.on("activateNote", handleClueNoteActivation);
+  game.settings.register(MODULE_ID, SETTINGS.SESSION_VIEW, {
+    name: "DMJ.Settings.SessionView.Name",
+    hint: "DMJ.Settings.SessionView.Hint",
+    scope: "client",
+    config: false,
+    type: String,
+    default: "cards"
+  });
   game.settings.registerMenu(MODULE_ID, "dashboard", {
     name: "DMJ.Settings.Open.Name",
     label: "DMJ.Settings.Open.Label",
@@ -79,11 +129,11 @@ Hooks.once("setup", () => {
       if (!dashboard.rendered) await dashboard.render({ force: true });
       return dashboard.openSession(page);
     },
-    async openBoard(page) {
+    async openBoard(page, options = {}) {
       if (!requireGameMasterUI()) return null;
       dashboard ??= new SessionDashboard();
       if (!dashboard.rendered) await dashboard.render({ force: true });
-      return dashboard.openBoard(page);
+      return dashboard.openBoard(page, options);
     },
     async openResource(page) {
       if (!requireGameMasterUI()) return null;

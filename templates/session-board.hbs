@@ -1,6 +1,6 @@
-<div class="dmj-board-shell">
+<div class="dmj-board-shell {{#if detailsCollapsed}}details-collapsed{{/if}}">
   <header class="dmj-board-toolbar">
-    <div class="dmj-board-heading"><span>{{localize "DMJ.Board.Title"}}</span><strong>{{sessionName}}</strong></div>
+    <div class="dmj-board-heading"><span>{{localize "DMJ.Board.Title"}}</span><strong data-board-session-name>{{sessionName}}</strong></div>
     <div class="dmj-board-help">
       <button type="button" class="dmj-board-help-trigger" aria-label="{{localize "DMJ.Board.HelpLabel"}}" aria-describedby="{{boardHelpId}}"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button>
       <div class="dmj-board-help-tooltip" id="{{boardHelpId}}" role="tooltip">
@@ -9,16 +9,58 @@
           <li><kbd>/diálogo</kbd><span>{{localize "DMJ.Board.HelpCallout"}}</span></li>
           <li><kbd>/seleção</kbd><span>{{localize "DMJ.Board.HelpCheck"}}</span></li>
           <li><kbd>/teste Nome</kbd><span>{{localize "DMJ.Board.HelpTest"}}</span></li>
+          <li><kbd>/pista Nome</kbd><span>{{localize "DMJ.Board.HelpClue"}}</span></li>
           <li><kbd>@</kbd><span>{{localize "DMJ.Board.HelpMention"}}</span></li>
           <li><i class="fa-solid fa-hand" aria-hidden="true"></i><span>{{localize "DMJ.Board.HelpDrop"}}</span></li>
         </ul>
       </div>
     </div>
     <div class="dmj-board-actions">
+      <button type="button" data-action="toggle-details" title="{{localize "DMJ.Board.ToggleDetails"}}" aria-label="{{localize "DMJ.Board.ToggleDetails"}}" aria-expanded="{{#if detailsCollapsed}}false{{else}}true{{/if}}"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><span>{{localize "DMJ.Board.AdventureDetails"}}</span></button>
       {{#if popoutAvailable}}<button type="button" data-action="popout-workspace" title="{{localize "DMJ.Popout.OpenWorkspace"}}" aria-label="{{localize "DMJ.Popout.OpenWorkspace"}}"><i class="fa-solid fa-display" aria-hidden="true"></i><span>{{localize "DMJ.Popout.OpenMonitor"}}</span></button>{{/if}}
       <div class="dmj-autosave-status" data-autosave-status data-state="saved" role="status" aria-live="polite"><i class="fa-solid fa-check" aria-hidden="true"></i><span>{{localize "DMJ.Board.AutosaveSaved"}}</span></div>
     </div>
   </header>
+
+  <div class="dmj-board-layout">
+    <button type="button" class="dmj-adventure-details-reopen" data-action="toggle-details" title="{{localize "DMJ.Board.ToggleDetails"}}" aria-label="{{localize "DMJ.Board.ToggleDetails"}}" aria-expanded="false"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+    <aside class="dmj-adventure-sidebar" aria-label="{{localize "DMJ.Board.AdventureDetails"}}">
+      <form data-form="board-details" autocomplete="off">
+        <header>
+          <span><i class="fa-solid fa-scroll" aria-hidden="true"></i><strong>{{localize "DMJ.Board.AdventureDetails"}}</strong></span>
+          <button type="button" class="dmj-adventure-private-toggle" data-action="toggle-details" title="{{localize "DMJ.Board.ToggleDetails"}}" aria-label="{{localize "DMJ.Board.ToggleDetails"}}"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span>{{localize "DMJ.Planner.Private"}}</span><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+        </header>
+        <div class="dmj-adventure-sidebar-content">
+          <div class="dmj-adventure-cover">
+            <button type="button" data-action="select-adventure-image" data-target="image" data-type="image" title="{{localize "DMJ.Session.SelectImage"}}" aria-label="{{localize "DMJ.Session.SelectImage"}}">
+              <img src="{{sessionDetails.image}}" alt="" data-adventure-image-preview {{#unless sessionDetails.image}}hidden{{/unless}}>
+              <span data-adventure-image-placeholder {{#if sessionDetails.image}}hidden{{/if}}><i class="fa-solid fa-image" aria-hidden="true"></i><small>{{localize "DMJ.Session.SelectImage"}}</small></span>
+            </button>
+            <input name="image" type="hidden" value="{{sessionDetails.image}}" data-session-detail>
+          </div>
+          <label class="dmj-adventure-name" for="dmj-board-name-{{formIdSuffix}}">{{localize "DMJ.Planner.SessionName"}}</label>
+          <input id="dmj-board-name-{{formIdSuffix}}" name="name" type="text" value="{{sessionDetails.name}}" maxlength="120" required data-session-detail>
+          <div class="dmj-adventure-meta">
+            <label for="dmj-board-date-{{formIdSuffix}}">{{localize "DMJ.Planner.Date"}}</label>
+            <input id="dmj-board-date-{{formIdSuffix}}" name="date" type="date" value="{{sessionDetails.date}}" data-session-detail>
+            <label for="dmj-board-status-{{formIdSuffix}}">{{localize "DMJ.Planner.Status"}}</label>
+            <select id="dmj-board-status-{{formIdSuffix}}" name="status" data-session-detail>
+              <option value="draft" {{#if sessionDetails.statusDraft}}selected{{/if}}>{{localize "DMJ.Status.Draft"}}</option>
+              <option value="ready" {{#if sessionDetails.statusReady}}selected{{/if}}>{{localize "DMJ.Status.Ready"}}</option>
+              <option value="played" {{#if sessionDetails.statusPlayed}}selected{{/if}}>{{localize "DMJ.Status.Played"}}</option>
+            </select>
+          </div>
+          <div class="dmj-adventure-detail-fields">
+            {{#each detailFields}}
+              <label for="dmj-board-detail-{{id}}-{{../formIdSuffix}}"><i class="fa-solid {{icon}}" aria-hidden="true"></i> {{label}}</label>
+              <textarea id="dmj-board-detail-{{id}}-{{../formIdSuffix}}" name="{{id}}" rows="{{rows}}" placeholder="{{placeholder}}" data-session-detail>{{value}}</textarea>
+            {{/each}}
+          </div>
+        </div>
+      </form>
+    </aside>
+
+    <section class="dmj-board-stage">
 
   <nav class="dmj-scene-tabs" aria-label="{{localize "DMJ.Board.Scenes"}}">
     {{#each scenes}}
@@ -59,8 +101,8 @@
           <header><input data-column-title value="{{title}}" maxlength="80" aria-label="{{localize "DMJ.Board.ColumnName"}}"><span data-column-count>0</span><button type="button" data-action="remove-column" data-column-id="{{id}}" aria-label="{{localize "DMJ.Board.RemoveColumn"}}"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button></header>
           <div class="dmj-task-list">
             {{#each cards}}
-              <article class="dmj-task-card" data-card-id="{{id}}">
-                <header class="dmj-task-drag" data-card-drag-handle draggable="true" title="{{localize "DMJ.Board.DragCard"}}"><button type="button" draggable="false" data-action="remove-card" aria-label="{{localize "DMJ.Board.RemoveCard"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
+              <article class="dmj-task-card {{#if completed}}completed{{/if}}" data-card-id="{{id}}" data-card-completed="{{#if completed}}true{{else}}false{{/if}}">
+                <header class="dmj-task-drag" data-card-drag-handle draggable="true" title="{{localize "DMJ.Board.CardHeaderHint"}}"><button type="button" draggable="false" data-action="remove-card" aria-label="{{localize "DMJ.Board.RemoveCard"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
                 <div class="dmj-card-content">
                   {{#each blocks}}
                     <section class="dmj-content-block dmj-{{type}}-block" data-block-id="{{id}}" data-block-type="{{type}}">
@@ -68,6 +110,13 @@
                       {{#if isCallout}}
                         <header><label class="dmj-callout-title"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i><input type="text" maxlength="120" data-block-title value="{{title}}" aria-label="{{localize "DMJ.Board.CalloutTitle"}}"></label><button type="button" data-action="remove-block" aria-label="{{localize "DMJ.Board.RemoveBlock"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
                         <div class="dmj-block-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-block-text data-placeholder="{{localize "DMJ.Board.CalloutPlaceholder"}}" aria-label="{{localize "DMJ.Board.Callout"}}">{{{editorHTML}}}</div>
+                      {{/if}}
+                      {{#if isClue}}
+                        <header>
+                          <label class="dmj-clue-title"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="text" maxlength="120" data-block-title value="{{title}}" placeholder="{{localize "DMJ.Board.ClueTitlePlaceholder"}}" aria-label="{{localize "DMJ.Board.ClueTitle"}}"></label>
+                          <span class="dmj-clue-actions"><i class="fa-solid fa-shield-halved" aria-hidden="true" title="{{localize "DMJ.Board.CluePrivate"}}"></i><button type="button" draggable="true" data-clue-drag-handle title="{{localize "DMJ.Board.ClueDrag"}}" aria-label="{{localize "DMJ.Board.ClueDrag"}}"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></button><button type="button" data-action="remove-block" aria-label="{{localize "DMJ.Board.RemoveBlock"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></span>
+                        </header>
+                        <div class="dmj-block-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-block-text data-placeholder="{{localize "DMJ.Board.CluePlaceholder"}}" aria-label="{{localize "DMJ.Board.Clue"}}">{{{editorHTML}}}</div>
                       {{/if}}
                       {{#if isTest}}
                         <header><label class="dmj-test-title"><i class="fa-solid fa-dice-d20" aria-hidden="true"></i><input type="text" maxlength="120" data-block-title value="{{title}}" placeholder="{{localize "DMJ.Board.TestTitlePlaceholder"}}" aria-label="{{localize "DMJ.Board.TestTitle"}}"></label><button type="button" data-action="remove-block" aria-label="{{localize "DMJ.Board.RemoveBlock"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>
@@ -114,4 +163,6 @@
   {{else}}
     <div class="dmj-board-empty"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><h2>{{localize "DMJ.Board.EmptyTitle"}}</h2><p>{{localize "DMJ.Board.EmptyKanban"}}</p><button type="button" data-action="add-scene"><i class="fa-solid fa-plus" aria-hidden="true"></i> {{localize "DMJ.Board.AddScene"}}</button></div>
   {{/if}}
+    </section>
+  </div>
 </div>

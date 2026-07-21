@@ -3,6 +3,10 @@ export const FLAGS = Object.freeze({
   TYPE: "type"
 });
 
+export const SETTINGS = Object.freeze({
+  SESSION_VIEW: "sessionView"
+});
+
 export const DOCUMENT_TYPES = Object.freeze({
   DIARY: "diary",
   SESSION: "session",

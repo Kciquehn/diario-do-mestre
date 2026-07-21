@@ -1,14 +1,14 @@
-import { MODULE_ID, RESOURCE_KINDS } from "../constants.js";
+import { MODULE_ID, RESOURCE_KINDS, SETTINGS } from "../constants.js";
 import { DiaryService } from "../services/diary-service.js";
 import { ResourceService } from "../services/resource-service.js";
 import { ResourceEditor } from "./resource-editor.js";
 import { SessionBoard } from "./session-board.js";
-import { SessionPlanner } from "./session-planner.js";
 import { getElementDocument, getElementWindow, isPopoutAvailable, popoutApplication } from "../compat/popout.js";
 
 const { ApplicationV2, DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 const DASHBOARD_TABS = Object.freeze(["sessions", "library"]);
+const SESSION_VIEW_MODES = Object.freeze(["cards", "list"]);
 const KIND_ICONS = Object.freeze({
   person: "fa-user",
   place: "fa-location-dot",
@@ -27,6 +27,7 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     this.workspaceViews = new Map();
     this.activeView = "sessions";
     this.lastBaseTab = "sessions";
+    this.sessionViewMode = null;
   }
 
   static DEFAULT_OPTIONS = {
@@ -50,6 +51,8 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     this.activeTab = DASHBOARD_TABS.includes(this.activeTab) ? this.activeTab : "sessions";
     if (!this.activeView) this.activeView = this.activeTab;
     this.sessionQuery = String(this.sessionQuery ?? "");
+    const savedSessionViewMode = this.sessionViewMode ?? game.settings.get(MODULE_ID, SETTINGS.SESSION_VIEW);
+    this.sessionViewMode = SESSION_VIEW_MODES.includes(savedSessionViewMode) ? savedSessionViewMode : "cards";
     this.filterKind = ["all", ...RESOURCE_KINDS].includes(this.filterKind) ? this.filterKind : "all";
     this.filterQuery = String(this.filterQuery ?? "");
     const diary = DiaryService.getDiary();
@@ -60,6 +63,7 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
         id: page.id,
         name: page.name,
         date: page.getFlag(MODULE_ID, "date") ?? "",
+        image: DiaryService.getSessionImage(page),
         statusLabel: game.i18n.localize(`DMJ.Status.${status[0].toUpperCase()}${status.slice(1)}`),
         status
       };
@@ -94,6 +98,9 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
       sessionCountLabel: game.i18n.localize(sessions.length === 1 ? "DMJ.Session.CountOne" : "DMJ.Session.CountMany"),
       sessionEmpty: sessions.length === 0,
       sessionQuery: this.sessionQuery,
+      sessionViewMode: this.sessionViewMode,
+      sessionCardsView: this.sessionViewMode === "cards",
+      sessionListView: this.sessionViewMode === "list",
       resources,
       resourceKinds,
       filterQuery: this.filterQuery,
@@ -112,6 +119,7 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     await super._onRender(context, options);
     this.#bindRootListeners(this.element);
     this.#applySessionFilters();
+    this.#applySessionViewMode();
     this.#applyResourceFilters();
     await this.#restoreWorkspaceViews();
     this.#applyActiveTab();
@@ -131,6 +139,7 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
   onPopoutLoaded(node) {
     this.#bindRootListeners(node);
     this.#applySessionFilters();
+    this.#applySessionViewMode();
     this.#applyResourceFilters();
     for (const view of this.workspaceViews.values()) view.controller.onPopoutLoaded?.(view.controller.embeddedRoot);
     this.#applyActiveTab();
@@ -175,12 +184,14 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
   }
 
   async openSession(page) {
-    return this.#openWorkspaceView("session", page, () => new SessionPlanner(page), "fa-pen-ruler");
+    return this.openBoard(page);
   }
 
-  async openBoard(page) {
+  async openBoard(page, options = {}) {
     const label = `${game.i18n.localize("DMJ.Board.Title")}: ${page.name}`;
-    return this.#openWorkspaceView("board", page, () => new SessionBoard(page), "fa-route", label);
+    const board = await this.#openWorkspaceView("board", page, () => new SessionBoard(page), "fa-route", label);
+    if (options.focusBlockId) await board?.focusBlock(options.focusBlockId);
+    return board;
   }
 
   async openResource(page) {
@@ -207,16 +218,31 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     const statusElement = tile.querySelector(".dmj-session-status");
     statusElement.className = `dmj-session-status ${status}`;
     statusElement.textContent = game.i18n.localize(`DMJ.Status.${status[0].toUpperCase()}${status.slice(1)}`);
+    this.#updateSessionTileImage(tile, DiaryService.getSessionImage(page));
     const date = page.getFlag(MODULE_ID, "date") ?? "";
     let time = tile.querySelector("time");
     if (date) {
       time ??= this.#document().createElement("time");
       time.dateTime = date;
       time.textContent = date;
-      if (!time.isConnected) tile.append(time);
+      if (!time.isConnected) (tile.querySelector(".dmj-session-summary") ?? tile).append(time);
     } else time?.remove();
     this.#applySessionFilters();
     return tile;
+  }
+
+  #updateSessionTileImage(tile, image) {
+    const cover = tile.querySelector("[data-session-cover]");
+    if (!cover) return;
+    const visual = this.#document().createElement(image ? "img" : "i");
+    if (image) {
+      visual.src = image;
+      visual.alt = "";
+    } else {
+      visual.className = "fa-solid fa-book-open";
+      visual.setAttribute("aria-hidden", "true");
+    }
+    cover.replaceChildren(visual);
   }
 
   async refreshResourceTile(page) {
@@ -576,6 +602,24 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     if (emptyResult) emptyResult.hidden = visibleSessions > 0;
   }
 
+  async #setSessionViewMode(mode) {
+    if (!SESSION_VIEW_MODES.includes(mode) || mode === this.sessionViewMode) return;
+    await game.settings.set(MODULE_ID, SETTINGS.SESSION_VIEW, mode);
+    this.sessionViewMode = mode;
+    this.#applySessionViewMode();
+  }
+
+  #applySessionViewMode() {
+    const mode = SESSION_VIEW_MODES.includes(this.sessionViewMode) ? this.sessionViewMode : "cards";
+    const list = this.element.querySelector(".dmj-session-list");
+    for (const viewMode of SESSION_VIEW_MODES) list?.classList.toggle(viewMode, viewMode === mode);
+    for (const button of this.element.querySelectorAll("[data-action='set-session-view']")) {
+      const active = button.dataset.viewMode === mode;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    }
+  }
+
   #applyResourceFilters() {
     const kind = ["all", ...RESOURCE_KINDS].includes(this.filterKind) ? this.filterKind : "all";
     const query = normalizeSearch(this.filterQuery);
@@ -698,6 +742,8 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
         await this.#closeWorkspace(button.dataset.workspaceKey);
       } else if (button.dataset.action === "create-session") {
         await this.#createSession(button);
+      } else if (button.dataset.action === "set-session-view") {
+        await this.#setSessionViewMode(button.dataset.viewMode);
       } else if (button.dataset.action === "create-resource") {
         await this.#createResource(button);
       } else if (button.dataset.action === "open-resource") {

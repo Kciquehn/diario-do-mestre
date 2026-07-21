@@ -15,7 +15,7 @@ export const SESSION_FIELDS = Object.freeze([
   "notes"
 ]);
 
-const BOARD_BLOCK_TYPES = Object.freeze(["text", "callout", "check", "test"]);
+const BOARD_BLOCK_TYPES = Object.freeze(["text", "callout", "check", "test", "clue"]);
 const DEFAULT_COLUMN_WIDTH = 300;
 const MIN_COLUMN_WIDTH = 240;
 const MAX_COLUMN_WIDTH = 900;
@@ -32,6 +32,21 @@ function requireGameMaster() {
 
 function cleanName(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ").slice(0, 120);
+}
+
+function getInputValue(input, field) {
+  return typeof input?.get === "function" ? input.get(field) : input?.[field];
+}
+
+function normalizeSessionInput(input, fallbackImage = "") {
+  const name = cleanName(getInputValue(input, "name"));
+  if (!name) throw new Error(game.i18n.localize("DMJ.Error.SessionName"));
+  const data = Object.fromEntries(SESSION_FIELDS.map((field) => [field, String(getInputValue(input, field) ?? "").trim()]));
+  const rawStatus = getInputValue(input, "status");
+  const status = ["draft", "ready", "played"].includes(rawStatus) ? rawStatus : "draft";
+  const date = String(getInputValue(input, "date") ?? "").trim().slice(0, 32);
+  const image = String(getInputValue(input, "image") ?? fallbackImage).trim().slice(0, 2000);
+  return { name, data, status, date, image };
 }
 
 function normalizeColumnWidth(value) {
@@ -161,7 +176,11 @@ function readCardBlocks(card) {
     return {
       id: block.dataset.id || crypto.randomUUID(),
       type,
-      title: type === "callout" ? cleanName(block.dataset.title) || game.i18n.localize("DMJ.Board.Callout") : "",
+      title: type === "callout"
+        ? cleanName(block.dataset.title) || game.i18n.localize("DMJ.Board.Callout")
+        : type === "clue"
+          ? cleanName(block.dataset.title) || game.i18n.localize("DMJ.Board.Clue")
+          : "",
       height: null,
       html,
       text: richTextToPlainText(html),
@@ -224,7 +243,9 @@ function normalizeCard(card) {
         ? cleanName(block.title) || game.i18n.localize("DMJ.Board.Callout")
         : type === "test"
           ? cleanName(block.title) || game.i18n.localize("DMJ.Board.Test")
-          : "",
+          : type === "clue"
+            ? cleanName(block.title) || game.i18n.localize("DMJ.Board.Clue")
+            : "",
       height: null,
       html: content.html,
       text: content.text.trim(),
@@ -240,6 +261,7 @@ function normalizeCard(card) {
   });
   return {
     id: String(card.id || crypto.randomUUID()),
+    completed: Boolean(card.completed),
     blocks: blocks.length ? blocks : [defaultTextBlock()]
   };
 }
@@ -253,12 +275,13 @@ function boardContent(board = {}) {
     const columns = (scene.columns ?? []).map((column) => {
       const cards = (column.cards ?? []).map((card) => {
         const blocks = (card.blocks ?? []).map((block) => {
-          const title = block.type === "callout" || block.type === "test"
-            ? ` data-title="${escapeHTML(block.title || game.i18n.localize(block.type === "test" ? "DMJ.Board.Test" : "DMJ.Board.Callout"))}"`
+          const title = block.type === "callout" || block.type === "test" || block.type === "clue"
+            ? ` data-title="${escapeHTML(block.title || game.i18n.localize(block.type === "test" ? "DMJ.Board.Test" : block.type === "clue" ? "DMJ.Board.Clue" : "DMJ.Board.Callout"))}"`
             : "";
           const attributes = `data-dmj-block data-id="${escapeHTML(block.id)}" data-type="${escapeHTML(block.type)}"${title}`;
           const content = sanitizeRichTextHTML(block.html ?? plainTextToRichHTML(block.text));
           if (block.type === "callout") return `<blockquote ${attributes}><p>${content}</p></blockquote>`;
+          if (block.type === "clue") return `<blockquote ${attributes}><p>${content}</p></blockquote>`;
           if (block.type === "check") return `<p ${attributes} data-done="${Boolean(block.done)}">${block.done ? "☑" : "☐"} <span>${content}</span></p>`;
           if (block.type === "test") {
             const success = sanitizeRichTextHTML(block.successHTML ?? plainTextToRichHTML(block.successText));
@@ -279,7 +302,7 @@ function boardContent(board = {}) {
           }
           return `<p ${attributes}>${content}</p>`;
         }).join("");
-        return `<article data-dmj-task data-id="${escapeHTML(card.id)}">${blocks}</article>`;
+        return `<article data-dmj-task data-id="${escapeHTML(card.id)}" data-completed="${Boolean(card.completed)}">${blocks}</article>`;
       }).join("");
       const height = normalizeColumnHeight(column.height);
       const heightAttribute = height === null ? "" : ` data-height="${height}"`;
@@ -324,6 +347,10 @@ export class DiaryService {
     return data;
   }
 
+  static getSessionImage(page) {
+    return String(page?.getFlag(MODULE_ID, "image") ?? "").trim().slice(0, 2000);
+  }
+
   static getBoardData(page) {
     const board = { activeSceneId: "", scenes: [] };
     if (!page) return board;
@@ -351,6 +378,7 @@ export class DiaryService {
         height: normalizeColumnHeight(column.dataset.height),
         cards: [...column.querySelectorAll(":scope > [data-dmj-task]")].map((card) => ({
           id: card.dataset.id || crypto.randomUUID(),
+          completed: card.dataset.completed === "true",
           blocks: readCardBlocks(card)
         }))
       }))
@@ -438,22 +466,20 @@ export class DiaryService {
       throw new Error(game.i18n.localize("DMJ.Error.InvalidSession"));
     }
 
-    const name = cleanName(formData.get("name"));
-    if (!name) throw new Error(game.i18n.localize("DMJ.Error.SessionName"));
-    const data = Object.fromEntries(SESSION_FIELDS.map((field) => [field, String(formData.get(field) ?? "").trim()]));
-    const status = ["draft", "ready", "played"].includes(formData.get("status")) ? formData.get("status") : "draft";
+    const session = normalizeSessionInput(formData, this.getSessionImage(page));
 
     const board = this.getBoardData(page);
     await page.update({
-      name,
-      "text.content": sessionContent(data, board),
-      [`flags.${MODULE_ID}.status`]: status,
-      [`flags.${MODULE_ID}.date`]: String(formData.get("date") ?? "")
+      name: session.name,
+      "text.content": sessionContent(session.data, board),
+      [`flags.${MODULE_ID}.status`]: session.status,
+      [`flags.${MODULE_ID}.date`]: session.date,
+      [`flags.${MODULE_ID}.image`]: session.image
     });
     return page;
   }
 
-  static async updateBoard(page, board) {
+  static async updateBoard(page, board, sessionInput = null) {
     requireGameMaster();
     const diary = this.getDiary();
     if (!diary || !page || page.parent?.id !== diary.id || !diary.pages.has(page.id) || page.getFlag(MODULE_ID, FLAGS.TYPE) !== DOCUMENT_TYPES.SESSION) {
@@ -478,7 +504,17 @@ export class DiaryService {
     if (!normalized.scenes.some((scene) => scene.id === normalized.activeSceneId)) {
       normalized.activeSceneId = normalized.scenes[0]?.id ?? "";
     }
-    await page.update({ "text.content": sessionContent(this.getSessionData(page), normalized) });
+    const session = sessionInput ? normalizeSessionInput(sessionInput, this.getSessionImage(page)) : null;
+    const update = {
+      "text.content": sessionContent(session?.data ?? this.getSessionData(page), normalized)
+    };
+    if (session) {
+      update.name = session.name;
+      update[`flags.${MODULE_ID}.status`] = session.status;
+      update[`flags.${MODULE_ID}.date`] = session.date;
+      update[`flags.${MODULE_ID}.image`] = session.image;
+    }
+    await page.update(update);
     return page;
   }
 }

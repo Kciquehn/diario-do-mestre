@@ -1,11 +1,12 @@
 import { MODULE_ID } from "../constants.js";
-import { DiaryService } from "../services/diary-service.js";
+import { DiaryService, SESSION_FIELDS } from "../services/diary-service.js";
+import { CLUE_DRAG_TYPE } from "../services/clue-service.js";
 import { ResourceService } from "../services/resource-service.js";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow, isPopoutAvailable, popoutApplication } from "../compat/popout.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
-const BLOCK_TYPES = Object.freeze(["text", "callout", "check", "test"]);
+const BLOCK_TYPES = Object.freeze(["text", "callout", "check", "test", "clue"]);
 const AUTOSAVE_DELAY_MS = 750;
 const DEFAULT_COLUMN_WIDTH = 300;
 const MIN_COLUMN_WIDTH = 240;
@@ -21,6 +22,19 @@ const RESOURCE_MENTION_ICONS = Object.freeze({
   item: "fa-gem",
   encounter: "fa-skull-crossbones",
   faction: "fa-people-group"
+});
+const SESSION_FIELD_PRESENTATION = Object.freeze({
+  goal: { icon: "fa-bullseye", rows: 3, placeholder: "DMJ.Placeholder.goal" },
+  recap: { icon: "fa-clock-rotate-left", rows: 4 },
+  opening: { icon: "fa-door-open", rows: 4 },
+  scenes: { icon: "fa-clapperboard", rows: 5, placeholder: "DMJ.Placeholder.scenes" },
+  npcs: { icon: "fa-users", rows: 4 },
+  locations: { icon: "fa-map-location-dot", rows: 4 },
+  encounters: { icon: "fa-skull", rows: 4 },
+  items: { icon: "fa-gem", rows: 4 },
+  clues: { icon: "fa-magnifying-glass", rows: 4 },
+  improvisation: { icon: "fa-wand-magic-sparkles", rows: 4 },
+  notes: { icon: "fa-pen-to-square", rows: 4 }
 });
 const AUTOSAVE_ACTIONS = Object.freeze([
   "remove-block",
@@ -48,6 +62,8 @@ function newBlock(type = "text", text = "", requestedTitle = "") {
     ? game.i18n.localize("DMJ.Board.Callout")
     : type === "test"
       ? String(requestedTitle).trim().slice(0, 120) || game.i18n.localize("DMJ.Board.Test")
+      : type === "clue"
+        ? String(requestedTitle).trim().slice(0, 120) || game.i18n.localize("DMJ.Board.Clue")
       : "";
   return {
     id: crypto.randomUUID(),
@@ -68,7 +84,7 @@ function newBlock(type = "text", text = "", requestedTitle = "") {
 }
 
 function newCard() {
-  return { id: crypto.randomUUID(), blocks: [newBlock()] };
+  return { id: crypto.randomUUID(), completed: false, blocks: [newBlock()] };
 }
 
 function newColumn(title = game.i18n.localize("DMJ.Board.NewColumn")) {
@@ -126,6 +142,8 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     this.columnResizeState = null;
     this.embeddedRoot = null;
     this.workspaceHost = null;
+    this.sessionDetails = null;
+    this.detailsCollapsed = false;
   }
 
   static DEFAULT_OPTIONS = {
@@ -146,6 +164,19 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async #prepareViewContext() {
     this.board ??= DiaryService.getBoardData(this.page);
+    this.sessionDetails ??= this.#sessionDetailsFromPage();
+    const currentStatus = this.sessionDetails.status;
+    const detailFields = SESSION_FIELDS.map((field) => {
+      const presentation = SESSION_FIELD_PRESENTATION[field];
+      return {
+        id: field,
+        icon: presentation.icon,
+        rows: presentation.rows,
+        label: game.i18n.localize(`DMJ.Field.${field}`),
+        placeholder: presentation.placeholder ? game.i18n.localize(presentation.placeholder) : "",
+        value: this.sessionDetails[field] ?? ""
+      };
+    });
     const scenes = this.board.scenes.map((scene) => ({ ...scene, active: scene.id === this.board.activeSceneId }));
     const sourceScene = this.board.scenes.find((scene) => scene.id === this.board.activeSceneId);
     const resourcePages = new Map(ResourceService.getResources().map((page) => [page.uuid, page]));
@@ -180,18 +211,39 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
             isText: block.type === "text",
             isCallout: block.type === "callout",
             isCheck: block.type === "check",
-            isTest: block.type === "test"
+            isTest: block.type === "test",
+            isClue: block.type === "clue"
           }))
         }))
       }))
     } : null;
     return {
-      sessionName: this.page.name,
+      sessionName: this.sessionDetails.name || this.page.name,
+      sessionDetails: {
+        ...this.sessionDetails,
+        statusDraft: currentStatus === "draft",
+        statusReady: currentStatus === "ready",
+        statusPlayed: currentStatus === "played"
+      },
+      detailFields,
+      detailsCollapsed: this.detailsCollapsed,
+      formIdSuffix: this.page.id,
       scenes,
       activeScene,
       hasScenes: Boolean(activeScene),
       popoutAvailable: isPopoutAvailable(this.workspaceHost ?? this),
       boardHelpId: `dmj-board-help-${this.page.id}`
+    };
+  }
+
+  #sessionDetailsFromPage() {
+    const rawStatus = this.page.getFlag(MODULE_ID, "status");
+    return {
+      ...DiaryService.getSessionData(this.page),
+      name: this.page.name,
+      date: this.page.getFlag(MODULE_ID, "date") ?? "",
+      image: DiaryService.getSessionImage(this.page),
+      status: ["draft", "ready", "played"].includes(rawStatus) ? rawStatus : "draft"
     };
   }
 
@@ -252,11 +304,33 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     return this;
   }
 
+  async focusBlock(rawBlockId) {
+    const blockId = String(rawBlockId ?? "").trim();
+    if (!/^[A-Za-z0-9_-]{1,120}$/.test(blockId)) return false;
+    this.board ??= DiaryService.getBoardData(this.page);
+    if (this.#root()) this.#syncActiveScene();
+    const scene = this.board.scenes.find((candidate) => candidate.columns.some((column) => (
+      column.cards.some((card) => card.blocks.some((block) => block.id === blockId))
+    )));
+    if (!scene) return false;
+
+    this.board.activeSceneId = scene.id;
+    await this.#refreshView();
+    const block = this.#root()?.querySelector(`[data-block-id="${blockId}"]`);
+    if (!block) return false;
+    block.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+    block.classList.add("dmj-clue-focus");
+    this.#window().setTimeout(() => block.classList.remove("dmj-clue-focus"), 2400);
+    this.#scheduleAutosave();
+    return true;
+  }
+
   async captureForHostRender() {
     this.#clearAutosaveTimer();
     this.#closeSlashMenu();
     this.#closeMentionMenu();
     this.#closeSceneLinkMenu();
+    this.#syncSessionDetails();
     this.#syncActiveScene();
     await this.#saveBoard();
   }
@@ -297,6 +371,10 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     const rootDocument = getElementDocument(root);
 
     root.addEventListener("click", this.#onClick.bind(this), listenerOptions);
+    root.addEventListener("dblclick", this.#onDoubleClick.bind(this), listenerOptions);
+    root.addEventListener("submit", (event) => {
+      if (event.target.matches("[data-form='board-details']")) event.preventDefault();
+    }, listenerOptions);
     root.addEventListener("input", this.#onInput.bind(this), listenerOptions);
     root.addEventListener("change", this.#onChange.bind(this), listenerOptions);
     root.addEventListener("keydown", this.#onKeyDown.bind(this), listenerOptions);
@@ -312,6 +390,24 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
       if (this.sceneLinkMenu && !this.sceneLinkMenu.contains(event.target)) this.#closeSceneLinkMenu();
     }, listenerOptions);
     root.addEventListener("dragstart", (event) => {
+      const clueHandle = event.target.closest("[data-clue-drag-handle]");
+      if (clueHandle) {
+        const clueBlock = clueHandle.closest(".dmj-clue-block");
+        const title = clueBlock?.querySelector("[data-block-title]")?.value.trim().slice(0, 120);
+        const editor = clueBlock?.querySelector("[data-block-text]");
+        if (!clueBlock || !editor || !event.dataTransfer) return;
+        this.#syncActiveScene();
+        this.#scheduleAutosave();
+        event.dataTransfer.effectAllowed = "copy";
+        event.dataTransfer.setData("text/plain", JSON.stringify({
+          type: CLUE_DRAG_TYPE,
+          sourceSessionPageId: this.page.id,
+          sourceBlockId: clueBlock.dataset.blockId,
+          title: title || game.i18n.localize("DMJ.Board.Clue")
+        }));
+        clueBlock.classList.add("dragging-to-scene");
+        return;
+      }
       const handle = event.target.closest("[data-card-drag-handle]");
       this.draggedCard = handle?.closest(".dmj-task-card") ?? null;
       if (this.draggedCard) {
@@ -323,6 +419,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }, listenerOptions);
     root.addEventListener("dragend", () => {
+      root.querySelectorAll(".dmj-clue-block.dragging-to-scene").forEach((block) => block.classList.remove("dragging-to-scene"));
       this.draggedCard?.classList.remove("dragging");
       this.#clearDropTargets();
       this.draggedCard = null;
@@ -400,6 +497,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#updateCounts();
     this.#initializeEditorSizing(root);
     this.#setAutosaveStatus(this.autosaveState);
+    this.#applyDetailsState();
     if (this.focusAfterRender) {
       root.querySelector(`[data-card-id="${this.focusAfterRender}"] [data-block-text]`)?.focus();
       this.focusAfterRender = null;
@@ -440,8 +538,57 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   async #refreshView() {
+    this.#syncSessionDetails();
     if (this.embeddedRoot) return this.mount(this.embeddedRoot, this.workspaceHost);
     return this.render({ force: true });
+  }
+
+  #syncSessionDetails() {
+    const form = this.#root()?.querySelector?.("[data-form='board-details']");
+    if (!form) return;
+    const values = Object.fromEntries(new (getElementWindow(form).FormData)(form));
+    const rawStatus = values.status;
+    this.sessionDetails = {
+      ...this.sessionDetails,
+      ...Object.fromEntries(SESSION_FIELDS.map((field) => [field, String(values[field] ?? "")])),
+      name: String(values.name ?? ""),
+      date: String(values.date ?? ""),
+      image: String(values.image ?? ""),
+      status: ["draft", "ready", "played"].includes(rawStatus) ? rawStatus : "draft"
+    };
+  }
+
+  #applyDetailsState() {
+    const root = this.#root();
+    root?.querySelector(".dmj-board-shell")?.classList.toggle("details-collapsed", this.detailsCollapsed);
+    for (const button of root?.querySelectorAll("[data-action='toggle-details']") ?? []) {
+      button.setAttribute("aria-expanded", String(!this.detailsCollapsed));
+    }
+  }
+
+  async #selectAdventureImage(button) {
+    try {
+      const FilePickerClass = foundry.applications.apps.FilePicker.implementation;
+      const picker = FilePickerClass.fromButton(button);
+      picker.callback = (path) => {
+        const form = this.#root()?.querySelector("[data-form='board-details']");
+        if (!form) return;
+        form.elements.image.value = path;
+        const preview = form.querySelector("[data-adventure-image-preview]");
+        const placeholder = form.querySelector("[data-adventure-image-placeholder]");
+        if (preview) {
+          preview.src = path;
+          preview.hidden = !path;
+        }
+        if (placeholder) placeholder.hidden = Boolean(path);
+        this.#syncSessionDetails();
+        this.#scheduleAutosave();
+      };
+      await picker.render({ force: true });
+    } catch (error) {
+      console.error(`${MODULE_ID} |`, error);
+      ui.notifications.error(error.message);
+    }
   }
 
   #commands() {
@@ -466,6 +613,13 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
         label: game.i18n.localize("DMJ.Board.Command.Test"),
         hint: game.i18n.localize("DMJ.Board.Command.TestHint"),
         aliases: ["teste", "test", "rolagem", "prova"]
+      },
+      {
+        type: "clue",
+        icon: "fa-magnifying-glass",
+        label: game.i18n.localize("DMJ.Board.Command.Clue"),
+        hint: game.i18n.localize("DMJ.Board.Command.ClueHint"),
+        aliases: ["pista", "clue", "indicio"]
       }
     ];
   }
@@ -486,6 +640,15 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   #onInput(event) {
+    if (event.target.matches("[data-session-detail]")) {
+      this.#syncSessionDetails();
+      if (event.target.name === "name") {
+        const heading = this.#root()?.querySelector("[data-board-session-name]");
+        if (heading) heading.textContent = event.target.value.trim() || this.page.name;
+      }
+      this.#scheduleAutosave();
+      return;
+    }
     const editor = event.target.closest?.("[data-block-text]");
     if (editor?.closest(".dmj-check-block") && event.inputType?.startsWith("delete") && !richTextToPlainText(editor.innerHTML).trim()) {
       this.#removeEmptyCheckBlock(editor);
@@ -496,6 +659,11 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   #onChange(event) {
+    if (event.target.matches("[data-session-detail]")) {
+      this.#syncSessionDetails();
+      this.#scheduleAutosave();
+      return;
+    }
     if (event.target.matches("[data-block-done]")) this.#scheduleAutosave();
   }
 
@@ -1370,7 +1538,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     this.#initializeEditorSizing(insertedBlock);
     if (trailingBlock) this.#initializeEditorSizing(trailingBlock);
-    const focusTarget = type === "test" && !command?.argument
+    const focusTarget = (type === "test" || type === "clue") && !command?.argument
       ? insertedBlock.querySelector("[data-block-title]")
       : insertedBlock.querySelector("[data-block-text]");
     focusTarget?.focus();
@@ -1405,6 +1573,42 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
       label.append(icon, title);
       header.append(label, this.#createRemoveBlockButton());
       const editor = this.#createBlockEditor(block, "DMJ.Board.CalloutPlaceholder", "DMJ.Board.Callout");
+      section.append(header, editor);
+      return section;
+    }
+
+    if (block.type === "clue") {
+      const header = this.#document().createElement("header");
+      const label = this.#document().createElement("label");
+      label.className = "dmj-clue-title";
+      const icon = this.#document().createElement("i");
+      icon.className = "fa-solid fa-magnifying-glass";
+      icon.setAttribute("aria-hidden", "true");
+      const title = this.#document().createElement("input");
+      title.type = "text";
+      title.maxLength = 120;
+      title.dataset.blockTitle = "";
+      title.value = block.title || game.i18n.localize("DMJ.Board.Clue");
+      title.setAttribute("placeholder", game.i18n.localize("DMJ.Board.ClueTitlePlaceholder"));
+      title.setAttribute("aria-label", game.i18n.localize("DMJ.Board.ClueTitle"));
+      label.append(icon, title);
+
+      const actions = this.#document().createElement("span");
+      actions.className = "dmj-clue-actions";
+      const privateIcon = this.#document().createElement("i");
+      privateIcon.className = "fa-solid fa-shield-halved";
+      privateIcon.title = game.i18n.localize("DMJ.Board.CluePrivate");
+      privateIcon.setAttribute("aria-hidden", "true");
+      const dragButton = this.#document().createElement("button");
+      dragButton.type = "button";
+      dragButton.draggable = true;
+      dragButton.dataset.clueDragHandle = "";
+      dragButton.title = game.i18n.localize("DMJ.Board.ClueDrag");
+      dragButton.setAttribute("aria-label", game.i18n.localize("DMJ.Board.ClueDrag"));
+      dragButton.innerHTML = '<i class="fa-solid fa-location-dot" aria-hidden="true"></i>';
+      actions.append(privateIcon, dragButton, this.#createRemoveBlockButton());
+      header.append(label, actions);
+      const editor = this.#createBlockEditor(block, "DMJ.Board.CluePlaceholder", "DMJ.Board.Clue");
       section.append(header, editor);
       return section;
     }
@@ -1669,7 +1873,12 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     if (name === "select-scene" && event.target.matches("input")) return;
     event.preventDefault();
 
-    if (name === "insert-slash-block") {
+    if (name === "toggle-details") {
+      this.detailsCollapsed = !this.detailsCollapsed;
+      this.#applyDetailsState();
+    } else if (name === "select-adventure-image") {
+      await this.#selectAdventureImage(action);
+    } else if (name === "insert-slash-block") {
       this.#insertSlashBlock(action.dataset.blockType);
     } else if (name === "popout-workspace") {
       void popoutApplication(this.workspaceHost ?? this);
@@ -1733,6 +1942,18 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     if (AUTOSAVE_ACTIONS.includes(name)) this.#scheduleAutosave();
   }
 
+  #onDoubleClick(event) {
+    const handle = event.target.closest?.("[data-card-drag-handle]");
+    if (!handle || event.target.closest("button")) return;
+    const card = handle.closest(".dmj-task-card");
+    if (!card) return;
+    event.preventDefault();
+    const completed = !card.classList.contains("completed");
+    card.classList.toggle("completed", completed);
+    card.dataset.cardCompleted = String(completed);
+    this.#scheduleAutosave();
+  }
+
   #activeScene() {
     return this.board.scenes.find((scene) => scene.id === this.board.activeSceneId);
   }
@@ -1763,6 +1984,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
       height: normalizeColumnHeight(column.dataset.columnHeight),
       cards: [...column.querySelectorAll(".dmj-task-card")].map((card) => ({
         id: card.dataset.cardId,
+        completed: card.dataset.cardCompleted === "true",
         blocks: [...card.querySelectorAll(".dmj-content-block")].map((block) => {
           const type = BLOCK_TYPES.includes(block.dataset.blockType) ? block.dataset.blockType : "text";
           if (type === "test") {
@@ -1806,7 +2028,9 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
             type,
             title: type === "callout"
               ? block.querySelector("[data-block-title]")?.value.trim().slice(0, 120) || game.i18n.localize("DMJ.Board.Callout")
-              : "",
+              : type === "clue"
+                ? block.querySelector("[data-block-title]")?.value.trim().slice(0, 120) || game.i18n.localize("DMJ.Board.Clue")
+                : "",
             height: null,
             html,
             text: richTextToPlainText(html).trim(),
@@ -1850,14 +2074,24 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     const saveTask = (async () => {
       while (this.savedRevision !== this.autosaveRevision) {
         this.#clearAutosaveTimer();
+        this.#syncSessionDetails();
         this.#syncActiveScene();
         const revision = this.autosaveRevision;
         this.#setAutosaveStatus("saving");
         try {
-          await DiaryService.updateBoard(this.page, this.board);
+          await DiaryService.updateBoard(this.page, this.board, {
+            ...this.sessionDetails,
+            name: this.sessionDetails?.name.trim() || this.page.name
+          });
           this.savedRevision = revision;
           this.saveErrorNotified = false;
           this.#fitInactiveEditorsToContent();
+          await this.workspaceHost?.refreshSessionTile?.(this.page);
+          this.workspaceHost?.updateWorkspaceLabel?.(
+            "board",
+            this.page.id,
+            `${game.i18n.localize("DMJ.Board.Title")}: ${this.page.name}`
+          );
         } catch (error) {
           console.error(`${MODULE_ID} |`, error);
           this.#setAutosaveStatus("error");
