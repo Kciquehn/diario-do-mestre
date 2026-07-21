@@ -2,6 +2,22 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.1.0 - 2026-07-21
+
+### Adicionado
+
+- detalhes da aventura integrados ao roteiro em uma barra lateral recolhível;
+- imagens de capa para aventuras e modos de visualização em cartões ou lista;
+- comando `/pista`, com marcadores privados que podem ser arrastados para a cena;
+- abertura da cena e destaque da pista no Diário do Mestre ao ativar seu marcador;
+- conclusão visual de cartões com clique duplo na barra superior.
+
+### Alterado
+
+- aventuras agora abrem diretamente no roteiro unificado;
+- marcadores de pista apontam para a aventura privada sem criar páginas auxiliares no Journal;
+- contraste do botão para criar aventuras foi ampliado.
+
 ## 1.0.0 - 2026-07-20
 
 ### Adicionado

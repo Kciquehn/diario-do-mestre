@@ -26,6 +26,8 @@
 .dmj-create { margin: 20px 0; padding: 14px 18px; background: #fffaf0aa; border: 1px solid #9d815d; box-shadow: 2px 3px 8px #3d291822; }
 .dmj-create label { display: block; margin-bottom: 7px; font-weight: 700; }
 .dmj-input-row, .dmj-session-form { display: flex; gap: 8px; }
+.dmj-sessions-panel .dmj-input-row [data-action="create-session"] { padding: 5px 13px; color: #fff8e8; background: #6f2634; border: 1px solid #43151e; box-shadow: 0 1px 3px #2c17144d; font-weight: 700; }
+.dmj-sessions-panel .dmj-input-row [data-action="create-session"]:hover, .dmj-sessions-panel .dmj-input-row [data-action="create-session"]:focus-visible { color: #fff; background: #91384a; border-color: #c57d67; outline: 0; box-shadow: 0 0 0 2px #d8aa7059; }
 .dmj-dashboard-panel[data-dashboard-panel] input { flex: 1; min-width: 0; padding: 8px 10px; color: var(--dmj-ink); background: #fffdf5; border: 1px solid #846e53; }
 .dmj-dashboard-panel[data-dashboard-panel] button { width: auto; min-height: 32px; color: var(--dmj-ink); }
 .dmj-create button, .dmj-session-form button { padding: 5px 13px; color: white; background: var(--dmj-red); border: 1px solid #481a1a; }
