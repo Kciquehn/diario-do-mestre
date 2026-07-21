@@ -1,5 +1,5 @@
 import { DOCUMENT_TYPES, FLAGS, MODULE_ID } from "../constants.js";
-import { ResourceService, normalizeCityMap } from "../services/resource-service.js?v=1.4.8";
+import { ResourceService, normalizeCityMap } from "../services/resource-service.js?v=1.4.9";
 import { createId } from "../utils/id.js";
 import { getElementWindow } from "../compat/popout.js";
 

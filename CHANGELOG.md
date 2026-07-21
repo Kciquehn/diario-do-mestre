@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.9 - 2026-07-21
+
+### Alterado
+
+- a área de Actor ou Item vinculado foi movida para um botão compacto no canto superior direito da ficha;
+- o novo botão continua aceitando documentos arrastados e abre a ficha vinculada ao ser acionado;
+- o bloco largo anteriormente exibido abaixo do cabeçalho foi removido.
+
 ## 1.4.8 - 2026-07-21
 
 ### Alterado

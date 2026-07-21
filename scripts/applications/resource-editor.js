@@ -1,13 +1,13 @@
 import { MODULE_ID } from "../constants.js";
-import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.8";
+import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.9";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.4.8";
+import { CityMapController } from "./city-map-controller.js?v=1.4.9";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
 const AUTOSAVE_DELAY_MS = 750;
-const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v12.hbs`;
+const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v13.hbs`;
 const CITY_MAP_TEMPLATE = `modules/${MODULE_ID}/templates/city-map-panel-v1.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
@@ -58,6 +58,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
   async #prepareViewContext() {
     const data = ResourceService.getData(this.page);
     const linked = data.isCity || data.isPlace ? null : await ResourceService.getLinkedDocument(this.page);
+    const linkedLabel = linked ? `${linked.name} (${linked.documentName})` : game.i18n.localize("DMJ.Resource.Drop");
     const cityMapImage = data.isCity ? data.cityMap.image : "";
     return {
       ...data,
@@ -87,6 +88,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       cityMapZoomLabel: game.i18n.format("DMJ.CityMap.Zoom", { zoom: Math.round(data.cityMap.zoom * 100) }),
       linkedName: linked?.name,
       linkedType: linked?.documentName,
+      linkedLabel,
       hasLinked: Boolean(linked)
     };
   }
@@ -405,9 +407,16 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       }
       const form = this.#root().querySelector("form[data-form='resource-editor']");
       form.elements.linkedUuid.value = document.uuid;
-      const linkedName = form.querySelector("[data-linked-name]");
-      linkedName.textContent = `${document.name} (${document.documentName})`;
-      linkedName.disabled = false;
+      const linkedLabel = `${document.name} (${document.documentName})`;
+      const linkedButton = form.querySelector("[data-action='open-linked']");
+      const linkedName = linkedButton?.querySelector("[data-linked-name]");
+      if (linkedName) linkedName.textContent = linkedLabel;
+      if (linkedButton) {
+        linkedButton.disabled = false;
+        linkedButton.title = linkedLabel;
+        linkedButton.setAttribute("aria-label", `${game.i18n.localize("DMJ.Resource.OpenLinked")}: ${linkedLabel}`);
+      }
+      linkedButton?.closest(".dmj-resource-link")?.classList.add("has-linked");
       const preview = form.querySelector(".dmj-resource-portrait img");
       if (!form.elements.image.value && document.img) preview.src = document.img;
       this.#scheduleAutosave();
