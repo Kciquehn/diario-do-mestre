@@ -2,6 +2,12 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.2 - 2026-07-21
+
+### Corrigido
+
+- o mapa da cidade agora é exibido pela presença direta dos dados `cityMap`, evitando a condição intermediária que impedia o bloco de ser renderizado.
+
 ## 1.3.1 - 2026-07-21
 
 ### Corrigido

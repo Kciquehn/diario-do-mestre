@@ -7,7 +7,7 @@ import { CityMapController } from "./city-map-controller.js";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
 const AUTOSAVE_DELAY_MS = 750;
-const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v2.hbs`;
+const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v3.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
   place: "fa-location-dot",
