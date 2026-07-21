@@ -117,7 +117,8 @@ export function normalizeCityMap(value = {}) {
         name: cleanName(location?.name) || game.i18n.localize("DMJ.CityMap.UnnamedLocation"),
         x: boundedFloat(location?.x, 0, 100, 50),
         y: boundedFloat(location?.y, 0, 100, 50),
-        size: boundedFloat(location?.size, CITY_MAP_LOCATION_SIZE_MIN, CITY_MAP_LOCATION_SIZE_MAX, 1)
+        size: boundedFloat(location?.size, CITY_MAP_LOCATION_SIZE_MIN, CITY_MAP_LOCATION_SIZE_MAX, 1),
+        locked: booleanValue(location?.locked)
       };
     })
   };

@@ -437,12 +437,15 @@
 .dmj-city-location button:hover, .dmj-city-location button:focus-visible { color: #231713; background: #e8c77f; border-color: #f4dda5; outline: 0; box-shadow: none; }
 .dmj-city-location .dmj-city-location-pin { width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: 50%; cursor: grab; font-size: 1.05rem; }
 .dmj-city-location.dragging .dmj-city-location-pin { cursor: grabbing; }
+.dmj-city-location.locked .dmj-city-location-pin { cursor: not-allowed; }
 .dmj-city-location .dmj-city-location-name { min-width: 0; max-width: 0; padding-right: 0; padding-left: 0; overflow: hidden; color: transparent; background: transparent; border-width: 1px 0; border-color: transparent; border-left: 0; border-radius: 0 3px 3px 0; opacity: 0; pointer-events: none; text-overflow: ellipsis; transform: translateX(-6px); transition: max-width .2s ease, padding .2s ease, color .14s ease, background-color .14s ease, border-color .14s ease, opacity .14s ease, transform .2s ease; white-space: nowrap; }
 .dmj-city-location:hover .dmj-city-location-name, .dmj-city-location:focus-within .dmj-city-location-name, .dmj-city-location.dragging .dmj-city-location-name, .dmj-city-location.resizing .dmj-city-location-name { max-width: 190px; padding-right: 6px; padding-left: 6px; color: #f8eddd; background: #4a2928e8; border-width: 1px 1px 1px 0; border-color: #d0a668; opacity: 1; pointer-events: auto; transform: translateX(0); }
-.dmj-city-location .dmj-city-location-remove { width: 24px; min-height: 24px; margin-left: 3px; padding: 0; border-radius: 50%; opacity: 0; }
-.dmj-city-location:hover .dmj-city-location-remove, .dmj-city-location:focus-within .dmj-city-location-remove { opacity: 1; }
+.dmj-city-location .dmj-city-location-lock, .dmj-city-location .dmj-city-location-remove { width: 24px; min-height: 24px; margin-left: 3px; padding: 0; border-radius: 50%; opacity: 0; }
+.dmj-city-location:hover .dmj-city-location-lock, .dmj-city-location:focus-within .dmj-city-location-lock, .dmj-city-location:hover .dmj-city-location-remove, .dmj-city-location:focus-within .dmj-city-location-remove, .dmj-city-location.locked .dmj-city-location-lock { opacity: 1; }
+.dmj-city-location .dmj-city-location-lock.active { color: #281c17; background: #e8c77f; border-color: #f4dda5; }
 .dmj-city-location .dmj-city-location-resize { position: absolute; right: -7px; bottom: -10px; display: grid; width: 20px; min-height: 20px; padding: 0; place-items: center; border-radius: 50%; cursor: ew-resize; font-size: .55rem; opacity: 0; touch-action: none; }
 .dmj-city-location:hover .dmj-city-location-resize, .dmj-city-location:focus-within .dmj-city-location-resize, .dmj-city-location.resizing .dmj-city-location-resize { opacity: 1; }
+.dmj-city-location.locked .dmj-city-location-resize { display: none; }
 .dmj-city-location-dialog { display: grid; min-width: 340px; gap: 12px; padding: 6px; }
 .dmj-city-location-dialog label { display: grid; gap: 5px; font-weight: 700; }
 .dmj-city-location-dialog select, .dmj-city-location-dialog input { width: 100%; min-height: 34px; }

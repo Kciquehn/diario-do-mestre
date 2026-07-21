@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.6 - 2026-07-21
+
+### Adicionado
+
+- cada marcador do mapa de Cidade agora possui um cadeado persistente;
+- marcadores bloqueados não podem ser movidos nem redimensionados até serem desbloqueados;
+- o cadeado fechado permanece visível para indicar quais locais estão fixados.
+
 ## 1.4.5 - 2026-07-21
 
 ### Adicionado

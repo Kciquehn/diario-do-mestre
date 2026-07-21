@@ -293,6 +293,8 @@
   "DMJ.CityMap.OpenLocation": "Abrir ficha do local",
   "DMJ.CityMap.MoveLocation": "Arrastar marcador",
   "DMJ.CityMap.ResizeLocation": "Arraste para redimensionar; clique para alternar o tamanho",
+  "DMJ.CityMap.LockLocation": "Fixar marcador no mapa",
+  "DMJ.CityMap.UnlockLocation": "Desbloquear marcador",
   "DMJ.CityMap.RemoveLocation": "Remover marcador do mapa",
   "DMJ.CityMap.UnnamedLocation": "Local sem nome",
   "DMJ.CityMap.LocationMissing": "A ficha deste local não está mais disponível.",

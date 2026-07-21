@@ -293,6 +293,8 @@
   "DMJ.CityMap.OpenLocation": "Open location sheet",
   "DMJ.CityMap.MoveLocation": "Drag marker",
   "DMJ.CityMap.ResizeLocation": "Drag to resize; click to cycle marker size",
+  "DMJ.CityMap.LockLocation": "Lock marker on map",
+  "DMJ.CityMap.UnlockLocation": "Unlock marker",
   "DMJ.CityMap.RemoveLocation": "Remove marker from map",
   "DMJ.CityMap.UnnamedLocation": "Unnamed location",
   "DMJ.CityMap.LocationMissing": "This location sheet is no longer available.",
