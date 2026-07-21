@@ -2,6 +2,12 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.1 - 2026-07-21
+
+### Corrigido
+
+- o template da ficha recebeu um novo identificador para impedir que o cache do Foundry reutilize a versão anterior e esconda o mapa das cidades.
+
 ## 1.3.0 - 2026-07-21
 
 ### Adicionado
