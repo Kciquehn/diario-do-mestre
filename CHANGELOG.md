@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.4 - 2026-07-21
+
+### Corrigido
+
+- o mapa da Cidade agora usa um template próprio, inserido diretamente pelo controlador da ficha antes da ativação da interface;
+- removida a dependência de condição Handlebars e de seletor CSS para decidir se o mapa deve aparecer;
+- renovados os arquivos de entrada para impedir o reaproveitamento da implementação anterior pelo cache.
+
 ## 1.3.3 - 2026-07-21
 
 ### Corrigido

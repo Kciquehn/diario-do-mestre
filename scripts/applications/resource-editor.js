@@ -1,13 +1,14 @@
 import { MODULE_ID } from "../constants.js";
-import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.3";
+import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.4";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.3.3";
+import { CityMapController } from "./city-map-controller.js?v=1.3.4";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
 const AUTOSAVE_DELAY_MS = 750;
-const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v4.hbs`;
+const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v5.hbs`;
+const CITY_MAP_TEMPLATE = `modules/${MODULE_ID}/templates/city-map-panel-v1.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
   place: "fa-location-dot",
@@ -82,7 +83,9 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     this.embeddedRoot = container;
     this.workspaceHost = host;
     container.classList.add(MODULE_ID, "resource-editor", "dmj-workspace-view");
-    container.innerHTML = await foundry.applications.handlebars.renderTemplate(TEMPLATE, await this.#prepareViewContext());
+    const context = await this.#prepareViewContext();
+    container.innerHTML = await foundry.applications.handlebars.renderTemplate(TEMPLATE, context);
+    await this.#insertCityMap(container, context);
     this.#activate(container);
     return this;
   }
@@ -102,7 +105,19 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async _onRender(context, options) {
     await super._onRender(context, options);
+    await this.#insertCityMap(this.element, context);
     this.#activate(this.element);
+  }
+
+  async #insertCityMap(root, context = null) {
+    if (root.querySelector("[data-city-map]")) return;
+    const viewContext = context?.isCity === true ? context : await this.#prepareViewContext();
+    if (!viewContext.isCity) return;
+    const fields = root.querySelector(".dmj-resource-fields");
+    if (!fields) throw new Error("Diário do Mestre | Área de campos da Cidade não encontrada.");
+    const markup = await foundry.applications.handlebars.renderTemplate(CITY_MAP_TEMPLATE, viewContext);
+    const fragment = getElementDocument(root).createRange().createContextualFragment(markup);
+    fields.prepend(fragment);
   }
 
   #activate(root) {

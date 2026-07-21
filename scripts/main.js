@@ -1,4 +1,4 @@
-import { SessionDashboard } from "./applications/session-dashboard.js?v=1.3.3";
+import { SessionDashboard } from "./applications/session-dashboard.js?v=1.3.4";
 import { DOCUMENT_TYPES, FLAGS, MODULE_ID, SETTINGS } from "./constants.js";
 import { DiaryService } from "./services/diary-service.js";
 import { CLUE_DRAG_TYPE, ClueService } from "./services/clue-service.js";

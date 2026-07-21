@@ -1,5 +1,0 @@
-@import url("./diario-do-mestre.css?v=1.3.3");
-
-.dmj-resource-form:not([data-resource-kind="city"]) .dmj-city-map-panel {
-  display: none;
-}

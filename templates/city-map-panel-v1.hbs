@@ -1,0 +1,19 @@
+<section class="dmj-city-map-panel wide" data-city-map>
+  <header>
+    <div><strong><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> {{localize "DMJ.CityMap.Title"}}</strong><small>{{localize "DMJ.CityMap.Help"}}</small></div>
+    <div class="dmj-city-map-actions">
+      <span data-city-map-zoom>{{cityMapZoomLabel}}</span>
+      <button type="button" data-action="select-city-map" data-target="cityMapImage" data-type="image"><i class="fa-solid fa-image" aria-hidden="true"></i> <span data-city-map-image-action-label>{{#if cityMap.image}}{{localize "DMJ.CityMap.ChangeImage"}}{{else}}{{localize "DMJ.CityMap.SelectImage"}}{{/if}}</span></button>
+      <button type="button" data-action="add-city-location"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{localize "DMJ.CityMap.AddLocation"}}</button>
+      <button type="button" data-action="reset-city-map-view" aria-label="{{localize "DMJ.CityMap.ResetView"}}" title="{{localize "DMJ.CityMap.ResetView"}}"><i class="fa-solid fa-crosshairs" aria-hidden="true"></i></button>
+    </div>
+  </header>
+  <input name="cityMapImage" type="hidden" value="{{cityMap.image}}">
+  <textarea name="cityMap" hidden>{{cityMapJSON}}</textarea>
+  <div class="dmj-city-map-viewport" data-city-map-viewport tabindex="0" role="application" aria-label="{{localize "DMJ.CityMap.ViewportLabel"}}">
+    <div class="dmj-city-map-stage" data-city-map-stage style="transform: translate({{cityMap.panX}}px, {{cityMap.panY}}px) scale({{cityMap.zoom}});">
+      <div class="dmj-city-map-background" data-city-map-background></div>
+      <div class="dmj-city-map-locations" data-city-map-locations></div>
+    </div>
+  </div>
+</section>
