@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.5 - 2026-07-21
+
+### Corrigido
+
+- restaurado o identificador `data-resource-kind="city"` no formulário da ficha;
+- adicionada uma regra explícita para manter o painel do mapa visível mesmo quando uma folha de estilos antiga ainda estiver carregada no Foundry;
+- renovados os URLs do editor e dos estilos para invalidar o cache da versão anterior.
+
 ## 1.3.4 - 2026-07-21
 
 ### Corrigido

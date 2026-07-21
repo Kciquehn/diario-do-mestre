@@ -1,13 +1,13 @@
 import { MODULE_ID } from "../constants.js";
-import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.4";
+import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.5";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.3.4";
+import { CityMapController } from "./city-map-controller.js?v=1.3.5";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
 const AUTOSAVE_DELAY_MS = 750;
-const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v5.hbs`;
+const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v6.hbs`;
 const CITY_MAP_TEMPLATE = `modules/${MODULE_ID}/templates/city-map-panel-v1.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
