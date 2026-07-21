@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.10 - 2026-07-21
+
+### Alterado
+
+- o cabeçalho das fichas de Cidade não exibe mais retrato nem controles de enquadramento;
+- o cabeçalho de Cidade foi compactado para mostrar somente o tipo e o nome;
+- os demais tipos de registro preservam suas imagens e controles atuais.
+
 ## 1.3.9 - 2026-07-21
 
 ### Alterado

@@ -1,13 +1,13 @@
 import { MODULE_ID } from "../constants.js";
-import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.9";
+import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.10";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.3.9";
+import { CityMapController } from "./city-map-controller.js?v=1.3.10";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
 const AUTOSAVE_DELAY_MS = 750;
-const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v6.hbs`;
+const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v7.hbs`;
 const CITY_MAP_TEMPLATE = `modules/${MODULE_ID}/templates/city-map-panel-v1.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
@@ -151,12 +151,12 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     dropZone?.addEventListener("drop", this.#onDrop.bind(this), listenerOptions);
     form.querySelector("[data-action='open-linked']")?.addEventListener("click", () => this.#openLinked(), listenerOptions);
     const portrait = form.querySelector("[data-action='view-image']");
-    portrait.addEventListener("click", (event) => {
+    portrait?.addEventListener("click", (event) => {
       event.preventDefault();
       void this.#openImage(form);
     }, listenerOptions);
-    portrait.addEventListener("contextmenu", (event) => this.#openImageContextMenu(event, portrait), listenerOptions);
-    form.elements.image.addEventListener("input", () => this.#updateImagePreview(form), listenerOptions);
+    portrait?.addEventListener("contextmenu", (event) => this.#openImageContextMenu(event, portrait), listenerOptions);
+    form.elements.image?.addEventListener("input", () => this.#updateImagePreview(form), listenerOptions);
     for (const input of form.querySelectorAll("[data-image-framing-input]")) {
       input.addEventListener("input", () => this.#applyImageFraming(form), listenerOptions);
     }
@@ -320,6 +320,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
 
   #updateImagePreview(form) {
     const preview = form.querySelector(".dmj-resource-portrait img");
+    if (!preview) return;
     const selectedPath = form.elements.image.value.trim();
     preview.src = selectedPath || preview.dataset.fallback;
   }
