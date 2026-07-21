@@ -1,13 +1,13 @@
 import { MODULE_ID } from "../constants.js";
-import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js";
+import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.3";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js";
+import { CityMapController } from "./city-map-controller.js?v=1.3.3";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
 const AUTOSAVE_DELAY_MS = 750;
-const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v3.hbs`;
+const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v4.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
   place: "fa-location-dot",
@@ -70,8 +70,8 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       preview: data.image || cityMapImage || linked?.img || "icons/svg/mystery-man.svg",
       fallbackPreview: cityMapImage || linked?.img || "icons/svg/mystery-man.svg",
       imageZoomScale: data.imageZoom / 100,
-      cityMapJSON: data.isCity ? JSON.stringify(data.cityMap) : "",
-      cityMapZoomLabel: data.isCity ? game.i18n.format("DMJ.CityMap.Zoom", { zoom: Math.round(data.cityMap.zoom * 100) }) : "",
+      cityMapJSON: JSON.stringify(data.cityMap),
+      cityMapZoomLabel: game.i18n.format("DMJ.CityMap.Zoom", { zoom: Math.round(data.cityMap.zoom * 100) }),
       linkedName: linked?.name,
       linkedType: linked?.documentName,
       hasLinked: Boolean(linked)
@@ -142,7 +142,8 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     form.querySelector("[data-action='close-image-framing']")?.addEventListener("click", () => this.#closeImageFramingControls(form), listenerOptions);
     form.querySelector("[data-action='reset-image-framing']")?.addEventListener("click", () => this.#resetImageFraming(form), listenerOptions);
     this.#applyImageFraming(form);
-    const cityMapRoot = form.querySelector("[data-city-map]");
+    const resourceData = ResourceService.getData(this.page);
+    const cityMapRoot = resourceData.kind === "city" ? form.querySelector("[data-city-map]") : null;
     if (cityMapRoot) {
       this.cityMapController = new CityMapController({
         root: cityMapRoot,

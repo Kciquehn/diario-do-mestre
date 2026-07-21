@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.3 - 2026-07-21
+
+### Corrigido
+
+- o painel do mapa agora faz parte fixa da ficha e é ocultado por CSS somente para registros que não sejam Cidade;
+- os arquivos de entrada, estilo e template receberam novos URLs para impedir que o cache do Foundry reutilize a interface anterior;
+- o controlador interativo do mapa só é ativado em registros do tipo Cidade.
+
 ## 1.3.2 - 2026-07-21
 
 ### Corrigido

@@ -132,8 +132,8 @@ for (const path of scriptFiles) {
   if (check.status !== 0) fail(`${relativePath(path)}: ${check.stderr.trim() || "erro de sintaxe"}`);
 
   const source = readFileSync(path, "utf8");
-  for (const match of source.matchAll(/\bfrom\s+["'](\.{1,2}\/[^"']+)["']/g)) {
-    const imported = resolve(dirname(path), match[1]);
+  for (const match of source.matchAll(/(?:\bfrom\s+|\bimport\s*)["'](\.{1,2}\/[^"']+)["']/g)) {
+    const imported = resolve(dirname(path), match[1].split(/[?#]/, 1)[0]);
     if (!existsSync(imported)) fail(`${relativePath(path)} importa um arquivo ausente: ${match[1]}`);
   }
   const forbidden = [

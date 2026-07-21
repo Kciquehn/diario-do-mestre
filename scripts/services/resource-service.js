@@ -110,7 +110,7 @@ export class ResourceService {
       ...IMAGE_FRAMING_DEFAULTS,
       linkedUuid: "",
       isCity: kind === "city",
-      cityMap: kind === "city" ? normalizeCityMap(page?.getFlag(MODULE_ID, FLAGS.CITY_MAP)) : null,
+      cityMap: normalizeCityMap(kind === "city" ? page?.getFlag(MODULE_ID, FLAGS.CITY_MAP) : {}),
       notes: "",
       notesHTML: "",
       ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]]))
