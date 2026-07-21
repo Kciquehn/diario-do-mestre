@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.2 - 2026-07-21
+
+### Adicionado
+
+- cada ficha de Local agora permite escolher entre os layouts Editorial, Panorâmico e Compacto;
+- a preferência visual é salva na própria ficha e reaplicada automaticamente em qualquer cliente;
+- a troca de layout acontece imediatamente, sem recarregar ou interromper o salvamento automático.
+
 ## 1.4.1 - 2026-07-21
 
 ### Alterado

@@ -1,13 +1,13 @@
 import { MODULE_ID } from "../constants.js";
-import { PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.1";
+import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.2";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.4.1";
+import { CityMapController } from "./city-map-controller.js?v=1.4.2";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
 const AUTOSAVE_DELAY_MS = 750;
-const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v9.hbs`;
+const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v10.hbs`;
 const CITY_MAP_TEMPLATE = `modules/${MODULE_ID}/templates/city-map-panel-v1.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
@@ -66,6 +66,13 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
         id,
         label: game.i18n.localize(`DMJ.Resource.PlaceType.${id}`),
         selected: id === data.placeType
+      })) : [],
+      placeLayouts: data.isPlace ? PLACE_LAYOUTS.map((id) => ({
+        id,
+        icon: id === "panorama" ? "fa-image" : id === "compact" ? "fa-table-cells" : "fa-newspaper",
+        label: game.i18n.localize(`DMJ.Resource.Layout.${id}`),
+        hint: game.i18n.localize(`DMJ.Resource.Layout.${id}Hint`),
+        selected: id === data.layout
       })) : [],
       fields: RESOURCE_FIELDS[data.kind].map((field) => ({
         id: field,
@@ -435,6 +442,9 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   #onFormInput(event) {
+    if (event.target.matches?.("input[name='layout']")) {
+      event.target.form.dataset.placeLayout = event.target.value;
+    }
     const editor = event.target.closest?.("[data-resource-rich-editor]");
     if (editor) this.#handleEditorMutation(editor);
     this.#scheduleAutosave();
