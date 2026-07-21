@@ -1,5 +1,5 @@
 import { DOCUMENT_TYPES, FLAGS, MODULE_ID } from "../constants.js";
-import { ResourceService, normalizeCityMap } from "../services/resource-service.js?v=1.4.6";
+import { ResourceService, normalizeCityMap } from "../services/resource-service.js?v=1.4.7";
 import { createId } from "../utils/id.js";
 import { getElementWindow } from "../compat/popout.js";
 
@@ -84,13 +84,21 @@ export class CityMapController {
     this.background.replaceChildren();
     if (this.state.image) {
       const image = this.root.ownerDocument.createElement("img");
-      image.src = this.state.image;
       image.alt = "";
       image.draggable = false;
+      image.decoding = "async";
+      const applyAspectRatio = () => {
+        if (!image.isConnected || !image.naturalWidth || !image.naturalHeight) return;
+        this.viewport?.style.setProperty("--dmj-city-map-aspect-ratio", `${image.naturalWidth} / ${image.naturalHeight}`);
+      };
+      image.addEventListener("load", applyAspectRatio, { once: true, signal: this.listenerController?.signal });
+      image.src = this.state.image;
       this.background.append(image);
       this.root.classList.add("has-map-image");
+      if (image.complete) applyAspectRatio();
       return;
     }
+    this.viewport?.style.removeProperty("--dmj-city-map-aspect-ratio");
     const empty = this.root.ownerDocument.createElement("div");
     empty.className = "dmj-city-map-empty";
     const icon = this.root.ownerDocument.createElement("i");

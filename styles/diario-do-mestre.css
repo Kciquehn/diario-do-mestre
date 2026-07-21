@@ -423,11 +423,12 @@
 .dmj-city-map-actions button { width: auto; min-height: 30px; padding: 4px 8px; color: #f6ead8; background: #59372f; border: 1px solid #8f704f; box-shadow: none; font-size: .72rem; }
 .dmj-city-map-actions button:hover, .dmj-city-map-actions button:focus-visible { color: #241812; background: #e5c991; border-color: #f0dba8; outline: 0; box-shadow: none; }
 .dmj-city-map-viewport { position: relative; height: 430px; overflow: hidden; background-color: #241b22; background-image: radial-gradient(#86606e 1px, transparent 1px); background-size: 20px 20px; cursor: grab; touch-action: none; user-select: none; }
+.dmj-city-map-panel.has-map-image .dmj-city-map-viewport { width: 100%; height: auto; min-height: 0; aspect-ratio: var(--dmj-city-map-aspect-ratio, 16 / 9); }
 .dmj-city-map-viewport:focus-visible { outline: 2px solid #d4ad70; outline-offset: -2px; }
 .dmj-city-map-viewport.panning { cursor: grabbing; }
 .dmj-city-map-stage { position: absolute; inset: 0; width: 100%; height: 100%; transform-origin: 0 0; will-change: transform; }
 .dmj-city-map-background { position: absolute; inset: 0; overflow: hidden; background: #30252b; }
-.dmj-city-map-background > img { display: block; width: 100%; height: 100%; object-fit: contain; border: 0; pointer-events: none; user-select: none; }
+.dmj-city-map-background > img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: auto; border: 0; pointer-events: none; user-select: none; }
 .dmj-city-map-empty { display: grid; height: 100%; padding: 30px; place-content: center; place-items: center; gap: 10px; color: #d6c2ae; text-align: center; }
 .dmj-city-map-empty i { color: #d0a668; font-size: 2.4rem; }
 .dmj-city-map-locations { position: absolute; inset: 0; pointer-events: none; }

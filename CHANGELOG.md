@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.7 - 2026-07-21
+
+### Alterado
+
+- a área do mapa da Cidade agora acompanha automaticamente a proporção real da imagem;
+- mapas passam a ocupar toda a largura disponível sem faixas laterais nem recorte;
+- imagens maiores preservam a proporção e usam a qualidade de interpolação padrão do navegador.
+
 ## 1.4.6 - 2026-07-21
 
 ### Adicionado
