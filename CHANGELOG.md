@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.4 - 2026-07-21
+
+### Alterado
+
+- fichas de Local não exibem nem aceitam mais documentos vinculados;
+- vínculos antigos de Locais são ignorados e removidos no próximo salvamento automático;
+- os layouts foram ajustados para aproveitar o espaço anteriormente ocupado pelo vínculo.
+
 ## 1.4.3 - 2026-07-21
 
 ### Adicionado

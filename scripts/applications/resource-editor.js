@@ -1,13 +1,13 @@
 import { MODULE_ID } from "../constants.js";
-import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.3";
+import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.4";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.4.3";
+import { CityMapController } from "./city-map-controller.js?v=1.4.4";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
 const AUTOSAVE_DELAY_MS = 750;
-const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v10.hbs`;
+const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v11.hbs`;
 const CITY_MAP_TEMPLATE = `modules/${MODULE_ID}/templates/city-map-panel-v1.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
@@ -57,7 +57,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async #prepareViewContext() {
     const data = ResourceService.getData(this.page);
-    const linked = data.isCity ? null : await ResourceService.getLinkedDocument(this.page);
+    const linked = data.isCity || data.isPlace ? null : await ResourceService.getLinkedDocument(this.page);
     const cityMapImage = data.isCity ? data.cityMap.image : "";
     return {
       ...data,

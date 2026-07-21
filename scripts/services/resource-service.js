@@ -163,7 +163,7 @@ export class ResourceService {
       imagePositionY: root.dataset.imagePositionY,
       imageZoom: root.dataset.imageZoom
     }));
-    data.linkedUuid = root.dataset.linkedUuid ?? "";
+    data.linkedUuid = ["city", "place"].includes(kind) ? "" : root.dataset.linkedUuid ?? "";
     data.placeType = kind === "place" ? normalizePlaceType(root.dataset.placeType) : "";
     data.layout = kind === "place" ? normalizePlaceLayout(root.dataset.placeLayout) : "";
     for (const field of [...RESOURCE_FIELDS[kind], "notes"]) {
@@ -228,7 +228,7 @@ export class ResourceService {
         imagePositionY: formData.get("imagePositionY"),
         imageZoom: formData.get("imageZoom")
       }),
-      linkedUuid: DOCUMENT_UUID_PATTERN.test(String(formData.get("linkedUuid") ?? "").trim())
+      linkedUuid: !["city", "place"].includes(kind) && DOCUMENT_UUID_PATTERN.test(String(formData.get("linkedUuid") ?? "").trim())
         ? String(formData.get("linkedUuid") ?? "").trim()
         : "",
       placeType: kind === "place" ? normalizePlaceType(formData.get("placeType")) : "",
