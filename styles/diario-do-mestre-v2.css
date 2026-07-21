@@ -1,3 +1,4 @@
+/* Compatibilidade com manifestos mantidos em memória por instalações anteriores. */
 @import url("./diario-do-mestre.css?v=1.3.6");
 
 .dmj-resource-form[data-resource-kind="city"] .dmj-city-map-panel {

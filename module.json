@@ -2,7 +2,7 @@
   "id": "diario-do-mestre",
   "title": "Diário do Mestre",
   "description": "Um preparador privado e independente de sistema para organizar aventuras, roteiros, cenas e referências durante o jogo.",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
@@ -15,15 +15,15 @@
   ],
   "url": "https://github.com/Kciquehn/diario-do-mestre",
   "manifest": "https://github.com/Kciquehn/diario-do-mestre/releases/latest/download/module.json",
-  "download": "https://github.com/Kciquehn/diario-do-mestre/releases/download/v1.3.5/diario-do-mestre.zip",
+  "download": "https://github.com/Kciquehn/diario-do-mestre/releases/download/v1.3.6/diario-do-mestre.zip",
   "readme": "https://github.com/Kciquehn/diario-do-mestre/blob/main/README.md",
   "changelog": "https://github.com/Kciquehn/diario-do-mestre/blob/main/CHANGELOG.md",
   "bugs": "https://github.com/Kciquehn/diario-do-mestre/issues",
   "esmodules": [
-    "scripts/main-v4.js"
+    "scripts/main-v5.js"
   ],
   "styles": [
-    "styles/diario-do-mestre-v4.css"
+    "styles/diario-do-mestre-v5.css"
   ],
   "languages": [
     {

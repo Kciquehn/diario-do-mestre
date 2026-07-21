@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.6 - 2026-07-21
+
+### Corrigido
+
+- restauradas as entradas JavaScript e folhas de estilo das versões `1.3.3` e `1.3.4`, evitando erro 404 quando o Foundry ainda mantém um manifesto anterior em memória;
+- as entradas antigas agora funcionam como aliases permanentes para a implementação atual e não serão removidas em atualizações futuras;
+- o manifesto atual usa novas entradas sem quebrar clientes que ainda solicitam `main-v2.js`, `main-v3.js` ou seus estilos correspondentes.
+
 ## 1.3.5 - 2026-07-21
 
 ### Corrigido

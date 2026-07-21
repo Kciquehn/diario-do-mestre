@@ -1,8 +1,8 @@
 import { MODULE_ID } from "../constants.js";
-import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.5";
+import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.6";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.3.5";
+import { CityMapController } from "./city-map-controller.js?v=1.3.6";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
