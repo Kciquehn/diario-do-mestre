@@ -2,6 +2,12 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.1.1 - 2026-07-21
+
+### Alterado
+
+- controles de visualização das aventuras ampliados, com maior espaçamento e área de clique.
+
 ## 1.1.0 - 2026-07-21
 
 ### Adicionado
