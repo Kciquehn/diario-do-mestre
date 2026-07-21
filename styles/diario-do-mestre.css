@@ -35,9 +35,10 @@
 .dmj-toolbar div { display: flex; align-items: baseline; gap: 10px; }
 .dmj-toolbar span { color: #d8c6a6; font-size: .8rem; }
 .dmj-toolbar button { padding: 4px 10px; color: #f8f0df; background: #ffffff12; border: 1px solid #c6a875; }
-.dmj-toolbar .dmj-session-view-controls { align-items: center; gap: 8px; padding: 3px; background: #241916; border: 1px solid #665040; border-radius: 6px; }
-.dmj-session-view-controls button { display: grid; width: 38px; min-width: 38px; height: 34px; min-height: 34px; padding: 0; place-items: center; color: #d8c6a6; background: #ffffff0d; border: 1px solid #806b55; border-radius: 4px; box-shadow: none; font-size: .9rem; }
-.dmj-session-view-controls button:hover, .dmj-session-view-controls button.active { color: #2c211e; background: #e5c991; border-color: #f0dba8; box-shadow: none; }
+.dmj-toolbar .dmj-session-view-controls { align-items: center; gap: 8px; padding: 4px; background: #34221d; border: 1px solid #a47b50; border-radius: 6px; }
+.dmj-session-view-controls button { display: grid; width: 38px; min-width: 38px; height: 34px; min-height: 34px; padding: 0; place-items: center; color: #fff0d2; background: #70493a; border: 1px solid #c79a67; border-radius: 4px; box-shadow: none; font-size: .9rem; }
+.dmj-session-view-controls button:hover, .dmj-session-view-controls button:focus-visible { color: #fff8e8; background: #956345; border-color: #f0cc8f; outline: 2px solid #f0cc8f; outline-offset: 1px; box-shadow: none; }
+.dmj-session-view-controls button.active { color: #2c211e; background: #f0cf91; border-color: #fff0bd; box-shadow: inset 0 0 0 1px #a86a36; }
 .dmj-sessions { background: #fbf4e5; border: 1px solid #9b8060; box-shadow: 2px 3px 8px #3d29182b; }
 .dmj-session-list { gap: 10px; padding: 14px; }
 .dmj-session-list.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }

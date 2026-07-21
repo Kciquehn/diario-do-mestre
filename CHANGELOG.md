@@ -2,6 +2,13 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.8 - 2026-07-21
+
+### Alterado
+
+- os botões de visualização das Aventuras agora possuem fundo, borda e ícones com maior contraste;
+- os estados ativo, inativo, foco e passagem do mouse ficaram visualmente distintos.
+
 ## 1.4.7 - 2026-07-21
 
 ### Alterado
