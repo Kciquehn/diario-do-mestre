@@ -1,5 +1,5 @@
 import { DOCUMENT_TYPES, FLAGS, MODULE_ID } from "../constants.js";
-import { ResourceService, normalizeCityMap } from "../services/resource-service.js?v=1.3.7";
+import { ResourceService, normalizeCityMap } from "../services/resource-service.js?v=1.3.8";
 import { createId } from "../utils/id.js";
 import { getElementWindow } from "../compat/popout.js";
 
@@ -196,7 +196,8 @@ export class CityMapController {
 
   #locationDialogContent(places) {
     const content = this.root.ownerDocument.createElement("div");
-    content.className = "dmj-city-location-dialog";
+    const fields = this.root.ownerDocument.createElement("div");
+    fields.className = "dmj-city-location-dialog";
     const selectLabel = this.root.ownerDocument.createElement("label");
     const selectText = this.root.ownerDocument.createElement("span");
     selectText.textContent = game.i18n.localize("DMJ.CityMap.ExistingLocation");
@@ -229,7 +230,8 @@ export class CityMapController {
       if (place) name.value = place.name;
     });
     nameLabel.append(nameText, name);
-    content.append(selectLabel, nameLabel);
+    fields.append(selectLabel, nameLabel);
+    content.append(fields);
     return content;
   }
 

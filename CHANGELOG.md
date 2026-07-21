@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.8 - 2026-07-21
+
+### Corrigido
+
+- o grid da ficha usa linhas `max-content`, impedindo que o painel do mapa seja comprimido para poucos pixels;
+- o conteúdo do diálogo “Adicionar local” agora usa uma raiz sem atributos, conforme o contrato do `DialogV2` no Foundry v13;
+- painel do mapa, seletor de imagem e diálogo de local foram verificados diretamente em execução no Foundry v13 Build 351 pelo Brave.
+
 ## 1.3.7 - 2026-07-21
 
 ### Corrigido

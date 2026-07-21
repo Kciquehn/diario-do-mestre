@@ -1,7 +1,7 @@
 import { MODULE_ID, RESOURCE_KINDS, SETTINGS } from "../constants.js";
 import { DiaryService } from "../services/diary-service.js";
-import { ResourceService } from "../services/resource-service.js?v=1.3.7";
-import { ResourceEditor } from "./resource-editor.js?v=1.3.7";
+import { ResourceService } from "../services/resource-service.js?v=1.3.8";
+import { ResourceEditor } from "./resource-editor.js?v=1.3.8";
 import { SessionBoard } from "./session-board.js";
 import { getElementDocument, getElementWindow, isPopoutAvailable, popoutApplication } from "../compat/popout.js";
 
