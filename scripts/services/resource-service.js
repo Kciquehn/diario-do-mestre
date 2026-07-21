@@ -6,6 +6,8 @@ const DOCUMENT_UUID_PATTERN = /^[A-Za-z0-9._-]{1,500}$/;
 const IMAGE_FRAMING_DEFAULTS = Object.freeze({ imagePositionX: 50, imagePositionY: 50, imageZoom: 100 });
 const CITY_MAP_DEFAULTS = Object.freeze({ image: "", zoom: 1, panX: 0, panY: 0, locations: [] });
 const CITY_MAP_LOCATION_LIMIT = 250;
+const CITY_MAP_LOCATION_SIZE_MIN = 0.6;
+const CITY_MAP_LOCATION_SIZE_MAX = 2;
 
 export const RESOURCE_FIELDS = Object.freeze({
   person: ["role", "appearance", "personality", "motivation", "secrets"],
@@ -81,7 +83,8 @@ export function normalizeCityMap(value = {}) {
         uuid: DOCUMENT_UUID_PATTERN.test(rawUuid) ? rawUuid : "",
         name: cleanName(location?.name) || game.i18n.localize("DMJ.CityMap.UnnamedLocation"),
         x: boundedFloat(location?.x, 0, 100, 50),
-        y: boundedFloat(location?.y, 0, 100, 50)
+        y: boundedFloat(location?.y, 0, 100, 50),
+        size: boundedFloat(location?.size, CITY_MAP_LOCATION_SIZE_MIN, CITY_MAP_LOCATION_SIZE_MAX, 1)
       };
     })
   };

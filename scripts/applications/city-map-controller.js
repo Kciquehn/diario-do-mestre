@@ -1,9 +1,12 @@
 import { DOCUMENT_TYPES, FLAGS, MODULE_ID } from "../constants.js";
-import { ResourceService, normalizeCityMap } from "../services/resource-service.js?v=1.3.10";
+import { ResourceService, normalizeCityMap } from "../services/resource-service.js?v=1.3.11";
 import { createId } from "../utils/id.js";
 import { getElementWindow } from "../compat/popout.js";
 
 const { DialogV2 } = foundry.applications.api;
+const LOCATION_SIZE_MIN = 0.6;
+const LOCATION_SIZE_MAX = 2;
+const LOCATION_SIZE_DRAG_DISTANCE = 140;
 
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
@@ -19,6 +22,8 @@ export class CityMapController {
     this.state = normalizeCityMap(root.querySelector("[name='cityMap']")?.value);
     this.panState = null;
     this.locationDrag = null;
+    this.locationResize = null;
+    this.ignoreResizeClick = null;
   }
 
   activate() {
@@ -52,6 +57,8 @@ export class CityMapController {
     this.listenerController = null;
     this.panState = null;
     this.locationDrag = null;
+    this.locationResize = null;
+    this.ignoreResizeClick = null;
   }
 
   #sync(notify = true) {
@@ -108,6 +115,7 @@ export class CityMapController {
     marker.dataset.cityLocation = location.id;
     marker.style.left = `${location.x}%`;
     marker.style.top = `${location.y}%`;
+    marker.style.setProperty("--dmj-city-location-scale", String(location.size));
 
     const pin = this.root.ownerDocument.createElement("button");
     pin.type = "button";
@@ -137,7 +145,19 @@ export class CityMapController {
     removeIcon.className = "fa-solid fa-xmark";
     removeIcon.setAttribute("aria-hidden", "true");
     remove.append(removeIcon);
-    marker.append(pin, open, remove);
+
+    const resize = this.root.ownerDocument.createElement("button");
+    resize.type = "button";
+    resize.className = "dmj-city-location-resize";
+    resize.dataset.action = "resize-city-location";
+    resize.setAttribute("aria-label", game.i18n.localize("DMJ.CityMap.ResizeLocation"));
+    resize.title = game.i18n.localize("DMJ.CityMap.ResizeLocation");
+    const resizeIcon = this.root.ownerDocument.createElement("i");
+    resizeIcon.className = "fa-solid fa-up-right-and-down-left-from-center";
+    resizeIcon.setAttribute("aria-hidden", "true");
+    resize.append(resizeIcon);
+
+    marker.append(pin, open, remove, resize);
     return marker;
   }
 
@@ -174,6 +194,19 @@ export class CityMapController {
       event.preventDefault();
       this.state.locations = this.state.locations.filter((location) => location.id !== marker.dataset.cityLocation);
       this.#renderLocations();
+      this.#sync();
+      return;
+    }
+    if (action === "resize-city-location") {
+      event.preventDefault();
+      if (this.ignoreResizeClick === marker.dataset.cityLocation) {
+        this.ignoreResizeClick = null;
+        return;
+      }
+      const location = this.state.locations.find((entry) => entry.id === marker.dataset.cityLocation);
+      if (!location) return;
+      location.size = location.size >= LOCATION_SIZE_MAX ? LOCATION_SIZE_MIN : clamp(Math.round((location.size + 0.2) * 10) / 10, LOCATION_SIZE_MIN, LOCATION_SIZE_MAX);
+      marker.style.setProperty("--dmj-city-location-scale", String(location.size));
       this.#sync();
     }
   }
@@ -264,7 +297,7 @@ export class CityMapController {
         return;
       }
       const position = this.#viewportCenter();
-      this.state.locations.push({ id: createId(), uuid: place.uuid, name: place.name, ...position });
+      this.state.locations.push({ id: createId(), uuid: place.uuid, name: place.name, size: 1, ...position });
       this.#renderLocations();
       this.#sync();
     } catch (error) {
@@ -299,6 +332,26 @@ export class CityMapController {
   }
 
   #onPointerDown(event) {
+    const resizeHandle = event.target.closest("[data-action='resize-city-location']");
+    if (resizeHandle) {
+      if (event.button !== 0) return;
+      const marker = resizeHandle.closest("[data-city-location]");
+      const location = this.state.locations.find((entry) => entry.id === marker?.dataset.cityLocation);
+      if (!marker || !location) return;
+      this.locationResize = {
+        pointerId: event.pointerId,
+        id: location.id,
+        handle: resizeHandle,
+        startX: event.clientX,
+        startSize: location.size,
+        moved: false
+      };
+      resizeHandle.setPointerCapture?.(event.pointerId);
+      marker.classList.add("resizing");
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     const dragHandle = event.target.closest("[data-action='drag-city-location']");
     if (dragHandle) {
       if (event.button !== 0) return;
@@ -325,6 +378,16 @@ export class CityMapController {
   }
 
   #onPointerMove(event) {
+    if (this.locationResize?.pointerId === event.pointerId) {
+      const location = this.state.locations.find((entry) => entry.id === this.locationResize.id);
+      if (!location) return;
+      const delta = event.clientX - this.locationResize.startX;
+      if (Math.abs(delta) > 2) this.locationResize.moved = true;
+      location.size = clamp(Math.round((this.locationResize.startSize + delta / LOCATION_SIZE_DRAG_DISTANCE) * 100) / 100, LOCATION_SIZE_MIN, LOCATION_SIZE_MAX);
+      this.locationLayer.querySelector(`[data-city-location="${location.id}"]`)?.style.setProperty("--dmj-city-location-scale", String(location.size));
+      event.preventDefault();
+      return;
+    }
     if (this.locationDrag?.pointerId === event.pointerId) {
       const rect = this.stage.getBoundingClientRect();
       const location = this.state.locations.find((entry) => entry.id === this.locationDrag.id);
@@ -347,6 +410,20 @@ export class CityMapController {
   }
 
   #onPointerUp(event) {
+    if (this.locationResize?.pointerId === event.pointerId) {
+      if (this.locationResize.handle.hasPointerCapture?.(event.pointerId)) this.locationResize.handle.releasePointerCapture(event.pointerId);
+      this.locationLayer.querySelector(`[data-city-location="${this.locationResize.id}"]`)?.classList.remove("resizing");
+      this.ignoreResizeClick = this.locationResize.moved ? this.locationResize.id : null;
+      const resizedId = this.ignoreResizeClick;
+      if (resizedId) {
+        getElementWindow(this.root).setTimeout(() => {
+          if (this.ignoreResizeClick === resizedId) this.ignoreResizeClick = null;
+        }, 0);
+      }
+      this.locationResize = null;
+      this.#sync();
+      return;
+    }
     if (this.locationDrag?.pointerId === event.pointerId) {
       if (this.locationDrag.handle.hasPointerCapture?.(event.pointerId)) this.locationDrag.handle.releasePointerCapture(event.pointerId);
       this.locationLayer.querySelector(`[data-city-location="${this.locationDrag.id}"]`)?.classList.remove("dragging");

@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.11 - 2026-07-21
+
+### Adicionado
+
+- marcadores de Local no mapa da Cidade agora possuem uma alça para redimensionamento individual;
+- arrastar a alça ajusta livremente o tamanho entre 60% e 200%, enquanto clicar alterna tamanhos rapidamente;
+- o tamanho de cada marcador é salvo no mapa, com valor padrão seguro para locais criados em versões anteriores.
+
 ## 1.3.10 - 2026-07-21
 
 ### Alterado
