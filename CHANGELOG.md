@@ -2,6 +2,17 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.0 - 2026-07-21
+
+### Adicionado
+
+- fichas de Local agora possuem categorias para lojas, edifícios, áreas naturais, regiões, bairros, rotas, ruínas e pontos de interesse;
+- o tipo escolhido é validado e salvo junto da ficha, com “Local genérico” como padrão seguro para registros antigos.
+
+### Alterado
+
+- os campos da ficha de Local foram renomeados para atender desde estabelecimentos pequenos até regiões inteiras sem alterar os dados já preenchidos.
+
 ## 1.3.12 - 2026-07-21
 
 ### Alterado

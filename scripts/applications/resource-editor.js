@@ -1,13 +1,13 @@
 import { MODULE_ID } from "../constants.js";
-import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.12";
+import { PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.0";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.3.12";
+import { CityMapController } from "./city-map-controller.js?v=1.4.0";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
 const AUTOSAVE_DELAY_MS = 750;
-const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v7.hbs`;
+const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v8.hbs`;
 const CITY_MAP_TEMPLATE = `modules/${MODULE_ID}/templates/city-map-panel-v1.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
@@ -62,6 +62,11 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     return {
       ...data,
       kindLabel: game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`),
+      placeTypes: data.isPlace ? PLACE_TYPES.map((id) => ({
+        id,
+        label: game.i18n.localize(`DMJ.Resource.PlaceType.${id}`),
+        selected: id === data.placeType
+      })) : [],
       fields: RESOURCE_FIELDS[data.kind].map((field) => ({
         id: field,
         label: game.i18n.localize(`DMJ.Resource.Field.${data.kind}.${field}`),

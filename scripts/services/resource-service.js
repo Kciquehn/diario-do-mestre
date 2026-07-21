@@ -9,6 +9,18 @@ const CITY_MAP_LOCATION_LIMIT = 250;
 const CITY_MAP_LOCATION_SIZE_MIN = 0.6;
 const CITY_MAP_LOCATION_SIZE_MAX = 2;
 
+export const PLACE_TYPES = Object.freeze([
+  "generic",
+  "shop",
+  "building",
+  "wilderness",
+  "region",
+  "district",
+  "route",
+  "ruin",
+  "landmark"
+]);
+
 export const RESOURCE_FIELDS = Object.freeze({
   person: ["role", "appearance", "personality", "motivation", "secrets"],
   place: ["region", "atmosphere", "features", "inhabitants", "secrets"],
@@ -37,6 +49,11 @@ function escapeHTML(value) {
 
 function fieldHTML(data, field) {
   return sanitizeRichTextHTML(data[`${field}HTML`] ?? plainTextToRichHTML(data[field]));
+}
+
+export function normalizePlaceType(value) {
+  const placeType = String(value ?? "").trim();
+  return PLACE_TYPES.includes(placeType) ? placeType : "generic";
 }
 
 function boundedNumber(value, minimum, maximum, fallback) {
@@ -92,8 +109,9 @@ export function normalizeCityMap(value = {}) {
 
 function resourceContent(kind, data) {
   const framing = imageFraming(data);
+  const placeType = kind === "place" ? normalizePlaceType(data.placeType) : "";
   const fields = RESOURCE_FIELDS[kind].map((field) => `<section data-dmj-resource-field="${field}"><h2>${game.i18n.localize(`DMJ.Resource.Field.${kind}.${field}`)}</h2><p>${fieldHTML(data, field)}</p></section>`).join("\n");
-  return `<article data-dmj-resource data-kind="${kind}" data-image="${escapeHTML(data.image)}" data-image-position-x="${framing.imagePositionX}" data-image-position-y="${framing.imagePositionY}" data-image-zoom="${framing.imageZoom}" data-linked-uuid="${escapeHTML(data.linkedUuid)}"><h1>${escapeHTML(data.name)}</h1>${fields}<section data-dmj-resource-field="notes"><h2>${game.i18n.localize("DMJ.Resource.Notes")}</h2><p>${fieldHTML(data, "notes")}</p></section></article>`;
+  return `<article data-dmj-resource data-kind="${kind}" data-place-type="${placeType}" data-image="${escapeHTML(data.image)}" data-image-position-x="${framing.imagePositionX}" data-image-position-y="${framing.imagePositionY}" data-image-zoom="${framing.imageZoom}" data-linked-uuid="${escapeHTML(data.linkedUuid)}"><h1>${escapeHTML(data.name)}</h1>${fields}<section data-dmj-resource-field="notes"><h2>${game.i18n.localize("DMJ.Resource.Notes")}</h2><p>${fieldHTML(data, "notes")}</p></section></article>`;
 }
 
 export class ResourceService {
@@ -113,6 +131,8 @@ export class ResourceService {
       ...IMAGE_FRAMING_DEFAULTS,
       linkedUuid: "",
       isCity: kind === "city",
+      isPlace: kind === "place",
+      placeType: kind === "place" ? "generic" : "",
       cityMap: normalizeCityMap(kind === "city" ? page?.getFlag(MODULE_ID, FLAGS.CITY_MAP) : {}),
       notes: "",
       notesHTML: "",
@@ -130,6 +150,7 @@ export class ResourceService {
       imageZoom: root.dataset.imageZoom
     }));
     data.linkedUuid = root.dataset.linkedUuid ?? "";
+    data.placeType = kind === "place" ? normalizePlaceType(root.dataset.placeType) : "";
     for (const field of [...RESOURCE_FIELDS[kind], "notes"]) {
       const content = root.querySelector(`[data-dmj-resource-field="${field}"] p`);
       if (!content) continue;
@@ -146,7 +167,7 @@ export class ResourceService {
     const name = cleanName(rawName);
     if (!name) throw new Error(game.i18n.localize("DMJ.Resource.Error.Name"));
     const diary = await DiaryService.getOrCreateDiary();
-    const data = { name, image: "", ...IMAGE_FRAMING_DEFAULTS, linkedUuid: "", notes: "", notesHTML: "", ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]])) };
+    const data = { name, image: "", ...IMAGE_FRAMING_DEFAULTS, linkedUuid: "", placeType: kind === "place" ? "generic" : "", notes: "", notesHTML: "", ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]])) };
     const maxSort = Math.max(0, ...diary.pages.map((page) => page.sort ?? 0));
     const moduleFlags = { [FLAGS.TYPE]: DOCUMENT_TYPES.RESOURCE, kind };
     if (kind === "city") moduleFlags[FLAGS.CITY_MAP] = normalizeCityMap();
@@ -195,6 +216,7 @@ export class ResourceService {
       linkedUuid: DOCUMENT_UUID_PATTERN.test(String(formData.get("linkedUuid") ?? "").trim())
         ? String(formData.get("linkedUuid") ?? "").trim()
         : "",
+      placeType: kind === "place" ? normalizePlaceType(formData.get("placeType")) : "",
       ...richFields
     };
     const patch = { name, "text.content": resourceContent(kind, data) };
