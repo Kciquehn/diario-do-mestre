@@ -1,8 +1,8 @@
 import { MODULE_ID } from "../constants.js";
-import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.6";
+import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.7";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.3.6";
+import { CityMapController } from "./city-map-controller.js?v=1.3.7";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
@@ -117,7 +117,13 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!fields) throw new Error("Diário do Mestre | Área de campos da Cidade não encontrada.");
     const markup = await foundry.applications.handlebars.renderTemplate(CITY_MAP_TEMPLATE, viewContext);
     const fragment = getElementDocument(root).createRange().createContextualFragment(markup);
+    fields.style.overflowAnchor = "none";
     fields.prepend(fragment);
+    fields.scrollTop = 0;
+    getElementWindow(root).requestAnimationFrame(() => {
+      fields.scrollTop = 0;
+      fields.style.removeProperty("overflow-anchor");
+    });
   }
 
   #activate(root) {

@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.7 - 2026-07-21
+
+### Corrigido
+
+- desativada temporariamente a ancoragem automática de scroll durante a inserção do mapa da Cidade;
+- a área de campos agora volta ao topo imediatamente e no próximo frame, garantindo que o mapa recém-inserido seja a primeira seção visível;
+- preservadas todas as entradas de compatibilidade das versões anteriores.
+
 ## 1.3.6 - 2026-07-21
 
 ### Corrigido
