@@ -1,5 +1,5 @@
 import { DOCUMENT_TYPES, FLAGS, MODULE_ID } from "../constants.js";
-import { ResourceService, normalizeCityMap } from "../services/resource-service.js?v=1.4.9";
+import { ResourceService, normalizeCityMap } from "../services/resource-service.js?v=1.4.10";
 import { createId } from "../utils/id.js";
 import { getElementWindow } from "../compat/popout.js";
 
@@ -396,7 +396,11 @@ export class CityMapController {
       if (event.button !== 0) return;
       const marker = dragHandle.closest("[data-city-location]");
       const location = this.state.locations.find((entry) => entry.id === marker?.dataset.cityLocation);
-      if (!marker || !location || location.locked) return;
+      if (!marker || !location) return;
+      if (location.locked) {
+        this.#startPan(event);
+        return;
+      }
       this.locationDrag = { pointerId: event.pointerId, id: marker.dataset.cityLocation, handle: dragHandle };
       dragHandle.setPointerCapture?.(event.pointerId);
       marker.classList.add("dragging");
@@ -405,7 +409,11 @@ export class CityMapController {
       return;
     }
     if (event.target.closest("button, [data-city-location]")) return;
-    if (!this.viewport.contains(event.target) || event.button !== 0) return;
+    this.#startPan(event);
+  }
+
+  #startPan(event) {
+    if (!this.viewport.contains(event.target) || event.button !== 0) return false;
     this.panState = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -416,6 +424,7 @@ export class CityMapController {
     this.viewport.setPointerCapture?.(event.pointerId);
     this.viewport.classList.add("panning");
     event.preventDefault();
+    return true;
   }
 
   #onPointerMove(event) {

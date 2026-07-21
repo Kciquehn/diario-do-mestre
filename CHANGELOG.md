@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.10 - 2026-07-21
+
+### Alterado
+
+- arrastar sobre um marcador bloqueado agora move o mapa, sem alterar a posição do local;
+- marcadores bloqueados continuam revelando o nome ao passar o mouse;
+- remover e redimensionar ficam ocultos enquanto o cadeado estiver fechado.
+
 ## 1.4.9 - 2026-07-21
 
 ### Alterado
