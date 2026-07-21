@@ -149,6 +149,10 @@ Hooks.once("setup", () => {
       if (!dashboard?.rendered) return null;
       return dashboard.refreshResourceTile(page);
     },
+    addResource(page) {
+      if (!dashboard?.rendered) return null;
+      return dashboard.addResourceTile(page);
+    },
     isPopoutAvailable,
     popout(app) {
       if (!requireGameMasterUI()) return false;

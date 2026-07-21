@@ -2,6 +2,20 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.0 - 2026-07-21
+
+### Adicionado
+
+- novo tipo `Cidade` na Biblioteca do Mestre;
+- mapa privado por cidade, com imagem escolhida pelo File Picker, movimento por arraste, zoom pela roda ou teclado e ação para centralizar;
+- marcadores reposicionáveis ligados por UUID às fichas do tipo `Local`;
+- criação de uma nova ficha de Local diretamente pela ação de adicionar um ponto ao mapa.
+
+### Segurança e dados
+
+- imagens, coordenadas, zoom e UUIDs do mapa são normalizados antes da persistência em flag própria do módulo;
+- remover um marcador do mapa não exclui sua ficha de Local da biblioteca.
+
 ## 1.2.0 - 2026-07-21
 
 ### Adicionado

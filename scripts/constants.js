@@ -1,6 +1,7 @@
 export const MODULE_ID = "diario-do-mestre";
 export const FLAGS = Object.freeze({
-  TYPE: "type"
+  TYPE: "type",
+  CITY_MAP: "cityMap"
 });
 
 export const SETTINGS = Object.freeze({
@@ -13,4 +14,4 @@ export const DOCUMENT_TYPES = Object.freeze({
   RESOURCE: "resource"
 });
 
-export const RESOURCE_KINDS = Object.freeze(["person", "place", "item", "encounter", "faction"]);
+export const RESOURCE_KINDS = Object.freeze(["person", "place", "city", "item", "encounter", "faction"]);

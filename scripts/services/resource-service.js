@@ -4,10 +4,13 @@ import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "
 
 const DOCUMENT_UUID_PATTERN = /^[A-Za-z0-9._-]{1,500}$/;
 const IMAGE_FRAMING_DEFAULTS = Object.freeze({ imagePositionX: 50, imagePositionY: 50, imageZoom: 100 });
+const CITY_MAP_DEFAULTS = Object.freeze({ image: "", zoom: 1, panX: 0, panY: 0, locations: [] });
+const CITY_MAP_LOCATION_LIMIT = 250;
 
 export const RESOURCE_FIELDS = Object.freeze({
   person: ["role", "appearance", "personality", "motivation", "secrets"],
   place: ["region", "atmosphere", "features", "inhabitants", "secrets"],
+  city: ["overview", "districts", "government", "population", "secrets"],
   item: ["category", "appearance", "effect", "location", "secrets"],
   encounter: ["setup", "participants", "challenge", "rewards", "consequences"],
   faction: ["objective", "resources", "allies", "enemies", "secrets"]
@@ -48,6 +51,42 @@ function imageFraming(data = {}) {
   };
 }
 
+function boundedFloat(value, minimum, maximum, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(maximum, Math.max(minimum, Math.round(number * 1000) / 1000));
+}
+
+export function normalizeCityMap(value = {}) {
+  let source = value;
+  if (typeof source === "string") {
+    try {
+      source = JSON.parse(source);
+    } catch {
+      source = {};
+    }
+  }
+  if (!source || typeof source !== "object" || Array.isArray(source)) source = {};
+  const locations = Array.isArray(source.locations) ? source.locations : [];
+  return {
+    image: String(source.image ?? "").trim().slice(0, 2000),
+    zoom: boundedFloat(source.zoom, 0.5, 3, CITY_MAP_DEFAULTS.zoom),
+    panX: boundedFloat(source.panX, -5000, 5000, CITY_MAP_DEFAULTS.panX),
+    panY: boundedFloat(source.panY, -5000, 5000, CITY_MAP_DEFAULTS.panY),
+    locations: locations.slice(0, CITY_MAP_LOCATION_LIMIT).map((location, index) => {
+      const rawId = String(location?.id ?? "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64);
+      const rawUuid = String(location?.uuid ?? "").trim();
+      return {
+        id: rawId || `location-${index + 1}`,
+        uuid: DOCUMENT_UUID_PATTERN.test(rawUuid) ? rawUuid : "",
+        name: cleanName(location?.name) || game.i18n.localize("DMJ.CityMap.UnnamedLocation"),
+        x: boundedFloat(location?.x, 0, 100, 50),
+        y: boundedFloat(location?.y, 0, 100, 50)
+      };
+    })
+  };
+}
+
 function resourceContent(kind, data) {
   const framing = imageFraming(data);
   const fields = RESOURCE_FIELDS[kind].map((field) => `<section data-dmj-resource-field="${field}"><h2>${game.i18n.localize(`DMJ.Resource.Field.${kind}.${field}`)}</h2><p>${fieldHTML(data, field)}</p></section>`).join("\n");
@@ -70,6 +109,8 @@ export class ResourceService {
       image: "",
       ...IMAGE_FRAMING_DEFAULTS,
       linkedUuid: "",
+      isCity: kind === "city",
+      cityMap: kind === "city" ? normalizeCityMap(page?.getFlag(MODULE_ID, FLAGS.CITY_MAP)) : null,
       notes: "",
       notesHTML: "",
       ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]]))
@@ -104,12 +145,14 @@ export class ResourceService {
     const diary = await DiaryService.getOrCreateDiary();
     const data = { name, image: "", ...IMAGE_FRAMING_DEFAULTS, linkedUuid: "", notes: "", notesHTML: "", ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]])) };
     const maxSort = Math.max(0, ...diary.pages.map((page) => page.sort ?? 0));
+    const moduleFlags = { [FLAGS.TYPE]: DOCUMENT_TYPES.RESOURCE, kind };
+    if (kind === "city") moduleFlags[FLAGS.CITY_MAP] = normalizeCityMap();
     const [page] = await diary.createEmbeddedDocuments("JournalEntryPage", [{
       name,
       type: "text",
       text: { content: resourceContent(kind, data), format: CONST.JOURNAL_ENTRY_PAGE_FORMATS.HTML },
       sort: maxSort + 100000,
-      flags: { [MODULE_ID]: { [FLAGS.TYPE]: DOCUMENT_TYPES.RESOURCE, kind } }
+      flags: { [MODULE_ID]: moduleFlags }
     }]);
     return page;
   }
@@ -151,7 +194,11 @@ export class ResourceService {
         : "",
       ...richFields
     };
-    await page.update({ name, "text.content": resourceContent(kind, data) });
+    const patch = { name, "text.content": resourceContent(kind, data) };
+    if (kind === "city") {
+      patch[`flags.${MODULE_ID}.${FLAGS.CITY_MAP}`] = normalizeCityMap(formData.has("cityMap") ? formData.get("cityMap") : page.getFlag(MODULE_ID, FLAGS.CITY_MAP));
+    }
+    await page.update(patch);
     return page;
   }
 

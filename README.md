@@ -14,7 +14,8 @@ Um preparador de aventuras privado, independente de sistema e integrado ao Found
 - testes com sucesso, falha, resultados numéricos e descrições opcionais;
 - menções com `@` para registros da biblioteca, Atores e Itens;
 - referências persistentes por UUID, sem duplicar Documents do sistema;
-- biblioteca reutilizável de personagens, locais, itens, encontros e facções;
+- biblioteca reutilizável de personagens, locais, cidades, itens, encontros e facções;
+- cidades com mapas privados navegáveis, zoom e marcadores vinculados às fichas de locais;
 - imagens escolhidas pelo File Picker, abertas no visualizador do Foundry e com enquadramento ajustável por zoom e posição;
 - salvamento automático do roteiro e das fichas da biblioteca;
 - integração opcional com PopOut no Foundry v13 e janelas destacáveis nativas no v14.

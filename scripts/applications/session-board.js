@@ -20,6 +20,7 @@ const TEMPLATE = `modules/${MODULE_ID}/templates/session-board.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
   place: "fa-location-dot",
+  city: "fa-city",
   item: "fa-gem",
   encounter: "fa-skull-crossbones",
   faction: "fa-people-group"

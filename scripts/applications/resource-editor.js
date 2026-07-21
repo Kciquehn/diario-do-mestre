@@ -2,6 +2,7 @@ import { MODULE_ID } from "../constants.js";
 import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
+import { CityMapController } from "./city-map-controller.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
@@ -10,6 +11,7 @@ const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
   place: "fa-location-dot",
+  city: "fa-city",
   item: "fa-gem",
   encounter: "fa-skull-crossbones",
   faction: "fa-people-group"
@@ -33,6 +35,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     this.mentionState = null;
     this.embeddedRoot = null;
     this.workspaceHost = null;
+    this.cityMapController = null;
   }
 
   static DEFAULT_OPTIONS = {
@@ -54,6 +57,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
   async #prepareViewContext() {
     const data = ResourceService.getData(this.page);
     const linked = await ResourceService.getLinkedDocument(this.page);
+    const cityMapImage = data.isCity ? data.cityMap.image : "";
     return {
       ...data,
       kindLabel: game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`),
@@ -63,9 +67,11 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
         editorHTML: sanitizeRichTextHTML(data[`${field}HTML`] ?? plainTextToRichHTML(data[field]))
       })),
       notesHTML: sanitizeRichTextHTML(data.notesHTML ?? plainTextToRichHTML(data.notes)),
-      preview: data.image || linked?.img || "icons/svg/mystery-man.svg",
-      fallbackPreview: linked?.img || "icons/svg/mystery-man.svg",
+      preview: data.image || cityMapImage || linked?.img || "icons/svg/mystery-man.svg",
+      fallbackPreview: cityMapImage || linked?.img || "icons/svg/mystery-man.svg",
       imageZoomScale: data.imageZoom / 100,
+      cityMapJSON: data.isCity ? JSON.stringify(data.cityMap) : "",
+      cityMapZoomLabel: data.isCity ? game.i18n.format("DMJ.CityMap.Zoom", { zoom: Math.round(data.cityMap.zoom * 100) }) : "",
       linkedName: linked?.name,
       linkedType: linked?.documentName,
       hasLinked: Boolean(linked)
@@ -100,6 +106,8 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   #activate(root) {
+    this.cityMapController?.destroy();
+    this.cityMapController = null;
     this.#closeImageContextMenu();
     this.#closeSlashMenu();
     this.#closeMentionMenu();
@@ -134,6 +142,17 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     form.querySelector("[data-action='close-image-framing']")?.addEventListener("click", () => this.#closeImageFramingControls(form), listenerOptions);
     form.querySelector("[data-action='reset-image-framing']")?.addEventListener("click", () => this.#resetImageFraming(form), listenerOptions);
     this.#applyImageFraming(form);
+    const cityMapRoot = form.querySelector("[data-city-map]");
+    if (cityMapRoot) {
+      this.cityMapController = new CityMapController({
+        root: cityMapRoot,
+        page: this.page,
+        onChange: () => this.#scheduleAutosave(),
+        openResource: (page) => this.workspaceHost?.openResource?.(page) ?? game.modules.get(MODULE_ID)?.api?.openResource?.(page),
+        onResourceCreated: (page) => this.workspaceHost?.addResourceTile?.(page) ?? game.modules.get(MODULE_ID)?.api?.addResource?.(page)
+      });
+      this.cityMapController.activate();
+    }
     this.#setAutosaveStatus(this.autosaveState);
   }
 
@@ -166,6 +185,8 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#closeImageContextMenu();
     this.#closeSlashMenu();
     this.#closeMentionMenu();
+    this.cityMapController?.destroy();
+    this.cityMapController = null;
     this.listenerController?.abort();
   }
 

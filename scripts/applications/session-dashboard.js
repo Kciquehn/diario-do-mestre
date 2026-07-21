@@ -12,6 +12,7 @@ const SESSION_VIEW_MODES = Object.freeze(["cards", "list"]);
 const KIND_ICONS = Object.freeze({
   person: "fa-user",
   place: "fa-location-dot",
+  city: "fa-city",
   item: "fa-gem",
   encounter: "fa-skull-crossbones",
   faction: "fa-people-group"
@@ -70,14 +71,15 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     });
     const resources = await Promise.all(ResourceService.getResources(diary).map(async (page) => {
       const data = ResourceService.getData(page);
-      const linked = data.image ? null : await ResourceService.getLinkedDocument(page);
+      const resourceImage = data.image || data.cityMap?.image || "";
+      const linked = resourceImage ? null : await ResourceService.getLinkedDocument(page);
       return {
         id: page.id,
         name: page.name,
         kind: data.kind,
         kindLabel: game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`),
         icon: KIND_ICONS[data.kind],
-        image: data.image || linked?.img || "",
+        image: resourceImage || linked?.img || "",
         imagePositionX: data.imagePositionX,
         imagePositionY: data.imagePositionY
       };
@@ -254,8 +256,9 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     if (!tile) return null;
 
     const data = ResourceService.getData(page);
-    const linked = data.image ? null : await ResourceService.getLinkedDocument(page);
-    const image = data.image || linked?.img || "";
+    const resourceImage = data.image || data.cityMap?.image || "";
+    const linked = resourceImage ? null : await ResourceService.getLinkedDocument(page);
+    const image = resourceImage || linked?.img || "";
     const currentVisual = tile.firstElementChild;
     if (image) {
       const preview = currentVisual?.tagName === "IMG" ? currentVisual : this.#document().createElement("img");
@@ -279,6 +282,60 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     tile.dataset.resourceKind = data.kind;
     tile.querySelector("strong").textContent = page.name;
     tile.querySelector("small").textContent = game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`);
+    this.#applyResourceFilters();
+    return tile;
+  }
+
+  async addResourceTile(page) {
+    if (!this.rendered || !page) return null;
+    const existing = [...this.element.querySelectorAll(".dmj-resource-tile")]
+      .find((entry) => entry.dataset.pageId === page.id);
+    if (existing) return this.refreshResourceTile(page);
+    const grid = this.element.querySelector(".dmj-resource-grid");
+    if (!grid) return null;
+
+    const data = ResourceService.getData(page);
+    const resourceImage = data.image || data.cityMap?.image || "";
+    const linked = resourceImage ? null : await ResourceService.getLinkedDocument(page);
+    const image = resourceImage || linked?.img || "";
+    const tile = this.#document().createElement("button");
+    tile.type = "button";
+    tile.className = "dmj-resource-tile";
+    tile.dataset.action = "open-resource";
+    tile.dataset.pageId = page.id;
+    tile.dataset.resourceKind = data.kind;
+    tile.title = game.i18n.localize("DMJ.Resource.ContextHint");
+    const visual = this.#document().createElement(image ? "img" : "i");
+    if (image) {
+      visual.src = image;
+      visual.alt = "";
+      visual.style.objectPosition = `${data.imagePositionX}% ${data.imagePositionY}%`;
+    } else {
+      visual.className = `fa-solid ${KIND_ICONS[data.kind] ?? "fa-book-open"}`;
+      visual.setAttribute("aria-hidden", "true");
+    }
+    const text = this.#document().createElement("span");
+    const name = this.#document().createElement("strong");
+    name.textContent = page.name;
+    const kind = this.#document().createElement("small");
+    kind.textContent = game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`);
+    text.append(name, kind);
+    tile.append(visual, text);
+    grid.querySelector(".dmj-resource-empty:not([data-resource-filter-empty])")?.remove();
+    if (!grid.querySelector("[data-resource-filter-empty]")) {
+      const emptyResult = this.#document().createElement("div");
+      emptyResult.className = "dmj-resource-empty";
+      emptyResult.dataset.resourceFilterEmpty = "";
+      emptyResult.hidden = true;
+      const emptyIcon = this.#document().createElement("i");
+      emptyIcon.className = "fa-solid fa-magnifying-glass";
+      emptyIcon.setAttribute("aria-hidden", "true");
+      const emptyTitle = this.#document().createElement("h2");
+      emptyTitle.textContent = game.i18n.localize("DMJ.Resource.FilterEmpty");
+      emptyResult.append(emptyIcon, emptyTitle);
+      grid.append(emptyResult);
+    }
+    grid.append(tile);
     this.#applyResourceFilters();
     return tile;
   }

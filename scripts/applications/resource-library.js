@@ -7,6 +7,7 @@ const { ApplicationV2, DialogV2, HandlebarsApplicationMixin } = foundry.applicat
 const KIND_ICONS = Object.freeze({
   person: "fa-user",
   place: "fa-location-dot",
+  city: "fa-city",
   item: "fa-gem",
   encounter: "fa-skull-crossbones",
   faction: "fa-people-group"
@@ -35,14 +36,15 @@ export class ResourceLibrary extends HandlebarsApplicationMixin(ApplicationV2) {
     this.filterQuery = String(this.filterQuery ?? "");
     const resources = await Promise.all(ResourceService.getResources().map(async (page) => {
       const data = ResourceService.getData(page);
-      const linked = data.image ? null : await ResourceService.getLinkedDocument(page);
+      const resourceImage = data.image || data.cityMap?.image || "";
+      const linked = resourceImage ? null : await ResourceService.getLinkedDocument(page);
       return {
         id: page.id,
         name: page.name,
         kind: data.kind,
         kindLabel: game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`),
         icon: KIND_ICONS[data.kind],
-        image: data.image || linked?.img || "",
+        image: resourceImage || linked?.img || "",
         imagePositionX: data.imagePositionX,
         imagePositionY: data.imagePositionY
       };

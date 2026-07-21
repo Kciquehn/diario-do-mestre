@@ -352,6 +352,36 @@
 .dmj-resource-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; padding: 14px 16px; overflow-y: auto; }
 .dmj-resource-fields label { color: #553b30; font-weight: 700; }
 .dmj-resource-fields label.wide { grid-column: 1 / -1; }
+.dmj-city-map-panel { grid-column: 1 / -1; min-width: 0; overflow: hidden; background: #201a1c; border: 1px solid #8f704f; border-radius: 5px; box-shadow: 0 2px 7px #0004; }
+.dmj-city-map-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; color: #f6ead8; background: #35231f; border-bottom: 2px solid #b98c55; }
+.dmj-city-map-panel > header > div:first-child { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.dmj-city-map-panel > header strong { color: #f0cf95; font-family: Georgia, serif; }
+.dmj-city-map-panel > header small { color: #cbbba6; font-size: .7rem; line-height: 1.25; }
+.dmj-city-map-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
+.dmj-city-map-actions > span { min-width: 72px; color: #d7c6ae; font-size: .7rem; text-align: center; }
+.dmj-city-map-actions button { width: auto; min-height: 30px; padding: 4px 8px; color: #f6ead8; background: #59372f; border: 1px solid #8f704f; box-shadow: none; font-size: .72rem; }
+.dmj-city-map-actions button:hover, .dmj-city-map-actions button:focus-visible { color: #241812; background: #e5c991; border-color: #f0dba8; outline: 0; box-shadow: none; }
+.dmj-city-map-viewport { position: relative; height: 430px; overflow: hidden; background-color: #241b22; background-image: radial-gradient(#86606e 1px, transparent 1px); background-size: 20px 20px; cursor: grab; touch-action: none; user-select: none; }
+.dmj-city-map-viewport:focus-visible { outline: 2px solid #d4ad70; outline-offset: -2px; }
+.dmj-city-map-viewport.panning { cursor: grabbing; }
+.dmj-city-map-stage { position: absolute; inset: 0; width: 100%; height: 100%; transform-origin: 0 0; will-change: transform; }
+.dmj-city-map-background { position: absolute; inset: 0; overflow: hidden; background: #30252b; }
+.dmj-city-map-background > img { display: block; width: 100%; height: 100%; object-fit: contain; border: 0; pointer-events: none; user-select: none; }
+.dmj-city-map-empty { display: grid; height: 100%; padding: 30px; place-content: center; place-items: center; gap: 10px; color: #d6c2ae; text-align: center; }
+.dmj-city-map-empty i { color: #d0a668; font-size: 2.4rem; }
+.dmj-city-map-locations { position: absolute; inset: 0; pointer-events: none; }
+.dmj-city-location { position: absolute; z-index: 2; display: grid; grid-template-columns: auto minmax(70px, auto) auto; align-items: center; transform: translate(-18px, -50%); pointer-events: auto; filter: drop-shadow(0 2px 3px #000b); }
+.dmj-city-location.dragging { z-index: 5; filter: drop-shadow(0 4px 5px #000d); }
+.dmj-city-location button { min-height: 28px; margin: 0; padding: 3px 6px; color: #f8eddd; background: #4a2928e8; border: 1px solid #d0a668; border-radius: 0; box-shadow: none; line-height: 1; }
+.dmj-city-location button:hover, .dmj-city-location button:focus-visible { color: #231713; background: #e8c77f; border-color: #f4dda5; outline: 0; box-shadow: none; }
+.dmj-city-location .dmj-city-location-pin { width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: 50%; cursor: grab; font-size: 1.05rem; }
+.dmj-city-location.dragging .dmj-city-location-pin { cursor: grabbing; }
+.dmj-city-location .dmj-city-location-name { max-width: 190px; overflow: hidden; border-left: 0; border-radius: 0 3px 3px 0; text-overflow: ellipsis; white-space: nowrap; }
+.dmj-city-location .dmj-city-location-remove { width: 24px; min-height: 24px; margin-left: 3px; padding: 0; border-radius: 50%; opacity: 0; }
+.dmj-city-location:hover .dmj-city-location-remove, .dmj-city-location:focus-within .dmj-city-location-remove { opacity: 1; }
+.dmj-city-location-dialog { display: grid; min-width: 340px; gap: 12px; padding: 6px; }
+.dmj-city-location-dialog label { display: grid; gap: 5px; font-weight: 700; }
+.dmj-city-location-dialog select, .dmj-city-location-dialog input { width: 100%; min-height: 34px; }
 .dmj-resource-field-value { display: none !important; }
 .dmj-resource-rich-editor { display: block; width: 100%; min-height: 96px; max-height: 600px; margin-top: 4px; padding: 8px; overflow: auto; resize: vertical; color: var(--dmj-ink); background: #fffdf7; border: 1px solid #bda585; border-radius: 3px; font-family: inherit; font-weight: 400; line-height: 1.4; white-space: pre-wrap; }
 .dmj-resource-rich-editor-notes { min-height: 128px; }
@@ -370,5 +400,5 @@
 .dmj-resource-test [data-dmj-resource-test-failure] > strong { color: #8a3d43; }
 .dmj-resource-actions { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; color: #e6d7bf; background: #35231f; border-top: 2px solid var(--dmj-gold); }
 .dmj-resource-actions .dmj-autosave-status { justify-content: flex-end; }
-@media (max-width: 700px) { .dmj-hero > i { display: none; } .dmj-input-row { flex-direction: column; } .dmj-toolbar { align-items: stretch; flex-direction: column; } .dmj-planner-header, .dmj-planner-grid { grid-template-columns: 1fr; } .dmj-planner-card.wide { grid-column: auto; } .dmj-planner-meta { flex-wrap: wrap; } .dmj-resource-image-controls { grid-template-columns: 1fr; } .dmj-resource-image-controls-heading { grid-column: 1; } }
+@media (max-width: 700px) { .dmj-hero > i { display: none; } .dmj-input-row { flex-direction: column; } .dmj-toolbar { align-items: stretch; flex-direction: column; } .dmj-planner-header, .dmj-planner-grid { grid-template-columns: 1fr; } .dmj-planner-card.wide { grid-column: auto; } .dmj-planner-meta { flex-wrap: wrap; } .dmj-resource-image-controls { grid-template-columns: 1fr; } .dmj-resource-image-controls-heading { grid-column: 1; } .dmj-city-map-panel > header { align-items: stretch; flex-direction: column; } .dmj-city-map-actions { flex-wrap: wrap; } .dmj-city-map-viewport { height: 340px; } }
 @media (max-width: 900px) { .dmj-board-layout { grid-template-columns: 250px minmax(0, 1fr); } .dmj-board-toolbar { grid-template-columns: 1fr auto auto; } .dmj-board-actions button span { display: none; } }
