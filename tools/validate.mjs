@@ -139,6 +139,7 @@ for (const path of scriptFiles) {
   const forbidden = [
     [/\beval\s*\(/, "eval"],
     [/\bnew\s+Function\s*\(/, "new Function"],
+    [/\bcrypto\.randomUUID\s*\(/, "crypto.randomUUID; use foundry.utils.randomID"],
     [/\.updateSource\s*\(/, "updateSource"],
     [/\._source\b/, "_source"],
     [/\bgame\.socket\b/, "game.socket"]

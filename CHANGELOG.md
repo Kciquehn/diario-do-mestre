@@ -2,6 +2,13 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.1.2 - 2026-07-21
+
+### Corrigido
+
+- criação de cenas, colunas, cartões e blocos em ambientes hospedados sem `crypto.randomUUID()`;
+- erros em ações do roteiro agora são registrados e informados ao mestre em vez de falharem silenciosamente.
+
 ## 1.1.1 - 2026-07-21
 
 ### Alterado

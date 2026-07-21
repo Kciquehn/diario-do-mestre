@@ -60,6 +60,7 @@
   "DMJ.Placeholder.scenes": "List possible scenes, triggers, and consequences. A strict order is not required.",
   "DMJ.Board.Open": "Session Outline",
   "DMJ.Board.Title": "Session Outline",
+  "DMJ.Board.ActionError": "This action could not be completed in the session outline.",
   "DMJ.Board.AdventureDetails": "Adventure details",
   "DMJ.Board.ToggleDetails": "Show or hide adventure details",
   "DMJ.Board.KanbanHelp": "Write freely • @ mentions the library • drop an Actor or Item • / inserts content",

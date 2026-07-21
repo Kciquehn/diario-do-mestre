@@ -60,6 +60,7 @@
   "DMJ.Placeholder.scenes": "Liste cenas possíveis, gatilhos e consequências. Não precisa definir uma ordem rígida.",
   "DMJ.Board.Open": "Roteiro da Sessão",
   "DMJ.Board.Title": "Roteiro da Sessão",
+  "DMJ.Board.ActionError": "Não foi possível concluir esta ação no roteiro.",
   "DMJ.Board.AdventureDetails": "Detalhes da aventura",
   "DMJ.Board.ToggleDetails": "Mostrar ou ocultar os detalhes da aventura",
   "DMJ.Board.KanbanHelp": "Escreva livremente • @ menciona a biblioteca • arraste Ator ou Item • / insere conteúdo",

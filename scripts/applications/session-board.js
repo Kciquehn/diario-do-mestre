@@ -3,6 +3,7 @@ import { DiaryService, SESSION_FIELDS } from "../services/diary-service.js";
 import { CLUE_DRAG_TYPE } from "../services/clue-service.js";
 import { ResourceService } from "../services/resource-service.js";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
+import { createId } from "../utils/id.js";
 import { getElementDocument, getElementWindow, isPopoutAvailable, popoutApplication } from "../compat/popout.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -50,7 +51,7 @@ const AUTOSAVE_ACTIONS = Object.freeze([
 
 function newTestResult() {
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     value: "",
     html: "",
     text: ""
@@ -66,7 +67,7 @@ function newBlock(type = "text", text = "", requestedTitle = "") {
         ? String(requestedTitle).trim().slice(0, 120) || game.i18n.localize("DMJ.Board.Clue")
       : "";
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     type,
     title,
     height: null,
@@ -84,16 +85,16 @@ function newBlock(type = "text", text = "", requestedTitle = "") {
 }
 
 function newCard() {
-  return { id: crypto.randomUUID(), completed: false, blocks: [newBlock()] };
+  return { id: createId(), completed: false, blocks: [newBlock()] };
 }
 
 function newColumn(title = game.i18n.localize("DMJ.Board.NewColumn")) {
-  return { id: crypto.randomUUID(), title, width: DEFAULT_COLUMN_WIDTH, height: null, cards: [] };
+  return { id: createId(), title, width: DEFAULT_COLUMN_WIDTH, height: null, cards: [] };
 }
 
 function newScene(number) {
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     title: game.i18n.format("DMJ.Board.SceneNumber", { number }),
     links: [],
     columns: []
@@ -370,7 +371,12 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     const listenerOptions = { signal: this.listenerController.signal };
     const rootDocument = getElementDocument(root);
 
-    root.addEventListener("click", this.#onClick.bind(this), listenerOptions);
+    root.addEventListener("click", (event) => {
+      void this.#onClick(event).catch((error) => {
+        console.error(`${MODULE_ID} | Board action failed`, error);
+        ui.notifications.error(game.i18n.localize("DMJ.Board.ActionError"));
+      });
+    }, listenerOptions);
     root.addEventListener("dblclick", this.#onDoubleClick.bind(this), listenerOptions);
     root.addEventListener("submit", (event) => {
       if (event.target.matches("[data-form='board-details']")) event.preventDefault();
@@ -755,7 +761,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
       ? await ResourceService.getLinkedDocument(resourcePage)
       : null;
     scene.links.push({
-      id: crypto.randomUUID(),
+      id: createId(),
       uuid: linkedDocument.uuid,
       name: linkedDocument.name,
       documentName: linkedDocument.documentName,
@@ -1697,7 +1703,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     const outcome = this.#document().createElement("section");
     outcome.className = "dmj-test-outcome dmj-test-result";
     outcome.dataset.testOutcome = "result";
-    outcome.dataset.testResultId = result.id || crypto.randomUUID();
+    outcome.dataset.testResultId = result.id || createId();
     const label = this.#document().createElement("strong");
     label.textContent = game.i18n.localize("DMJ.Board.TestResult");
     const value = this.#document().createElement("input");
@@ -1998,7 +2004,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
               const editor = result.querySelector("[data-test-result-text]");
               const html = sanitizeRichTextHTML(editor?.innerHTML);
               return {
-                id: result.dataset.testResultId || crypto.randomUUID(),
+                id: result.dataset.testResultId || createId(),
                 value: result.querySelector("[data-test-result-value]")?.value.trim().slice(0, 30) ?? "",
                 html,
                 text: richTextToPlainText(html).trim()

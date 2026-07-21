@@ -1,5 +1,6 @@
 import { DOCUMENT_TYPES, FLAGS, MODULE_ID, RESOURCE_KINDS } from "../constants.js";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
+import { createId } from "../utils/id.js";
 
 export const SESSION_FIELDS = Object.freeze([
   "goal",
@@ -67,7 +68,7 @@ function normalizeSceneLink(link) {
   const documentName = SCENE_LINK_DOCUMENT_NAMES.includes(link?.documentName) ? link.documentName : "";
   const kind = RESOURCE_KINDS.includes(link?.kind) ? link.kind : "";
   return {
-    id: String(link?.id || crypto.randomUUID()),
+    id: String(link?.id || createId()),
     uuid,
     name: cleanName(link?.name) || game.i18n.localize("DMJ.Board.SceneLinkMissingName"),
     documentName,
@@ -118,7 +119,7 @@ function htmlToText(element) {
 
 function defaultTextBlock() {
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     type: "text",
     title: "",
     height: null,
@@ -148,14 +149,14 @@ function readCardBlocks(card) {
       const results = [...block.querySelectorAll(":scope > [data-dmj-test-result-entry]")].map((result) => {
         const html = sanitizeRichTextHTML(result.innerHTML);
         return {
-          id: result.dataset.id || crypto.randomUUID(),
+          id: result.dataset.id || createId(),
           value: String(result.dataset.value ?? "").trim().slice(0, 30),
           html,
           text: richTextToPlainText(html).trim()
         };
       }).filter((result) => result.value || result.text);
       return {
-        id: block.dataset.id || crypto.randomUUID(),
+        id: block.dataset.id || createId(),
         type,
         title: cleanName(block.dataset.title) || game.i18n.localize("DMJ.Board.Test"),
         height: null,
@@ -174,7 +175,7 @@ function readCardBlocks(card) {
     const content = type === "check" ? block.querySelector("span") ?? block : block.querySelector(":scope > p") ?? block;
     const html = sanitizeRichTextHTML(content.innerHTML);
     return {
-      id: block.dataset.id || crypto.randomUUID(),
+      id: block.dataset.id || createId(),
       type,
       title: type === "callout"
         ? cleanName(block.dataset.title) || game.i18n.localize("DMJ.Board.Callout")
@@ -203,12 +204,12 @@ function readCardBlocks(card) {
     legacyDescription ? htmlToText(legacyDescription) : ""
   ].filter(Boolean).join("\n\n");
   const legacyChecks = [...card.querySelectorAll("[data-dmj-check]")].map((item) => ({
-    id: item.dataset.id || crypto.randomUUID(),
+    id: item.dataset.id || createId(),
     type: "check",
     text: item.querySelector("span")?.textContent.trim() ?? "",
     done: item.dataset.done === "true"
   })).filter((item) => item.text);
-  const legacyBlocks = [...(text ? [{ id: crypto.randomUUID(), type: "text", text, done: false }] : []), ...legacyChecks];
+  const legacyBlocks = [...(text ? [{ id: createId(), type: "text", text, done: false }] : []), ...legacyChecks];
   return legacyBlocks.length ? legacyBlocks : [defaultTextBlock()];
 }
 
@@ -229,7 +230,7 @@ function normalizeCard(card) {
       ? (Array.isArray(block.results) ? block.results : []).slice(0, 50).map((result) => {
         const content = normalizeRichBlockContent(result);
         return {
-          id: String(result.id || crypto.randomUUID()),
+          id: String(result.id || createId()),
           value: String(result.value ?? "").trim().slice(0, 30),
           html: content.html,
           text: content.text.trim()
@@ -237,7 +238,7 @@ function normalizeCard(card) {
       }).filter((result) => result.value || result.text)
       : [];
     return {
-      id: String(block.id || crypto.randomUUID()),
+      id: String(block.id || createId()),
       type,
       title: type === "callout"
         ? cleanName(block.title) || game.i18n.localize("DMJ.Board.Callout")
@@ -260,7 +261,7 @@ function normalizeCard(card) {
     };
   });
   return {
-    id: String(card.id || crypto.randomUUID()),
+    id: String(card.id || createId()),
     completed: Boolean(card.completed),
     blocks: blocks.length ? blocks : [defaultTextBlock()]
   };
@@ -293,7 +294,7 @@ function boardContent(board = {}) {
               const html = sanitizeRichTextHTML(result.html ?? plainTextToRichHTML(result.text));
               const value = String(result.value ?? "").trim().slice(0, 30);
               if (!value && !richTextToPlainText(html).trim()) return "";
-              return `<p data-dmj-test-result-entry data-id="${escapeHTML(result.id || crypto.randomUUID())}" data-value="${escapeHTML(value)}">${html}</p>`;
+              return `<p data-dmj-test-result-entry data-id="${escapeHTML(result.id || createId())}" data-value="${escapeHTML(value)}">${html}</p>`;
             }).join("");
             const descriptionMarkup = richTextToPlainText(description).trim()
               ? `<p data-dmj-test-description>${description}</p>`
@@ -377,7 +378,7 @@ export class DiaryService {
         width: normalizeColumnWidth(column.dataset.width),
         height: normalizeColumnHeight(column.dataset.height),
         cards: [...column.querySelectorAll(":scope > [data-dmj-task]")].map((card) => ({
-          id: card.dataset.id || crypto.randomUUID(),
+          id: card.dataset.id || createId(),
           completed: card.dataset.completed === "true",
           blocks: readCardBlocks(card)
         }))
@@ -390,19 +391,19 @@ export class DiaryService {
           .filter((value) => value.trim())
           .join("\n\n");
         return {
-          id: card.dataset.id || crypto.randomUUID(),
+          id: card.dataset.id || createId(),
           title: card.querySelector(":scope > h3")?.textContent.trim() || game.i18n.localize("DMJ.Board.NewScene"),
           links: [],
           columns: [
             {
-              id: crypto.randomUUID(),
+              id: createId(),
               title: game.i18n.localize("DMJ.Board.Column.Todo"),
               width: DEFAULT_COLUMN_WIDTH,
               height: null,
-              cards: details ? [{ id: crypto.randomUUID(), blocks: [{ id: crypto.randomUUID(), type: "text", text: details, done: false }] }] : []
+              cards: details ? [{ id: createId(), blocks: [{ id: createId(), type: "text", text: details, done: false }] }] : []
             },
-            { id: crypto.randomUUID(), title: game.i18n.localize("DMJ.Board.Column.Doing"), width: DEFAULT_COLUMN_WIDTH, height: null, cards: [] },
-            { id: crypto.randomUUID(), title: game.i18n.localize("DMJ.Board.Column.Done"), width: DEFAULT_COLUMN_WIDTH, height: null, cards: [] }
+            { id: createId(), title: game.i18n.localize("DMJ.Board.Column.Doing"), width: DEFAULT_COLUMN_WIDTH, height: null, cards: [] },
+            { id: createId(), title: game.i18n.localize("DMJ.Board.Column.Done"), width: DEFAULT_COLUMN_WIDTH, height: null, cards: [] }
           ]
         };
       });
@@ -489,11 +490,11 @@ export class DiaryService {
     const normalized = {
       activeSceneId: String(board.activeSceneId ?? ""),
       scenes: (board.scenes ?? []).slice(0, 50).map((scene) => ({
-        id: String(scene.id || crypto.randomUUID()),
+        id: String(scene.id || createId()),
         title: cleanName(scene.title) || game.i18n.localize("DMJ.Board.NewScene"),
         links: normalizeSceneLinks(scene.links),
         columns: (scene.columns ?? []).slice(0, 20).map((column) => ({
-          id: String(column.id || crypto.randomUUID()),
+          id: String(column.id || createId()),
           title: cleanName(column.title) || game.i18n.localize("DMJ.Board.NewColumn"),
           width: normalizeColumnWidth(column.width),
           height: normalizeColumnHeight(column.height),
