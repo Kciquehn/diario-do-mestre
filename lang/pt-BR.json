@@ -265,6 +265,8 @@
   "DMJ.Resource.Layout.panoramaHint": "Imagem horizontal em destaque e campos em leitura vertical.",
   "DMJ.Resource.Layout.compact": "Compacto",
   "DMJ.Resource.Layout.compactHint": "Cabeçalho menor e mais campos visíveis ao mesmo tempo.",
+  "DMJ.Resource.Layout.sidebar": "Lateral",
+  "DMJ.Resource.Layout.sidebarHint": "Imagem alta à esquerda e todas as informações organizadas à direita.",
   "DMJ.Resource.Field.city.overview": "Visão geral",
   "DMJ.Resource.Field.city.districts": "Distritos e bairros",
   "DMJ.Resource.Field.city.government": "Governo e autoridades",

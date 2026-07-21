@@ -1,8 +1,8 @@
 import { MODULE_ID } from "../constants.js";
-import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.2";
+import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.3";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.4.2";
+import { CityMapController } from "./city-map-controller.js?v=1.4.3";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
@@ -69,7 +69,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       })) : [],
       placeLayouts: data.isPlace ? PLACE_LAYOUTS.map((id) => ({
         id,
-        icon: id === "panorama" ? "fa-image" : id === "compact" ? "fa-table-cells" : "fa-newspaper",
+        icon: id === "panorama" ? "fa-image" : id === "compact" ? "fa-table-cells" : id === "sidebar" ? "fa-table-columns" : "fa-newspaper",
         label: game.i18n.localize(`DMJ.Resource.Layout.${id}`),
         hint: game.i18n.localize(`DMJ.Resource.Layout.${id}Hint`),
         selected: id === data.layout

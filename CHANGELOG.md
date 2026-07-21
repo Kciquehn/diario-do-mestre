@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.3 - 2026-07-21
+
+### Adicionado
+
+- novo layout Lateral para fichas de Local, com imagem alta à esquerda e todo o conteúdo organizado à direita;
+- adaptação responsiva que converte o layout lateral em uma coluna nas janelas estreitas;
+- os controles de enquadramento continuam acessíveis sobre a área da imagem lateral.
+
 ## 1.4.2 - 2026-07-21
 
 ### Adicionado

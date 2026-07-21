@@ -24,7 +24,8 @@ export const PLACE_TYPES = Object.freeze([
 export const PLACE_LAYOUTS = Object.freeze([
   "editorial",
   "panorama",
-  "compact"
+  "compact",
+  "sidebar"
 ]);
 
 export const RESOURCE_FIELDS = Object.freeze({

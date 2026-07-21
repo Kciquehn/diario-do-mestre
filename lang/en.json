@@ -265,6 +265,8 @@
   "DMJ.Resource.Layout.panoramaHint": "Wide featured image with fields in a vertical reading flow.",
   "DMJ.Resource.Layout.compact": "Compact",
   "DMJ.Resource.Layout.compactHint": "Smaller header with more fields visible at once.",
+  "DMJ.Resource.Layout.sidebar": "Side panel",
+  "DMJ.Resource.Layout.sidebarHint": "Tall image on the left with all information arranged on the right.",
   "DMJ.Resource.Field.city.overview": "Overview",
   "DMJ.Resource.Field.city.districts": "Districts and neighborhoods",
   "DMJ.Resource.Field.city.government": "Government and authorities",
