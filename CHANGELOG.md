@@ -2,6 +2,13 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.12 - 2026-07-21
+
+### Alterado
+
+- nomes dos locais no mapa da Cidade ficam recolhidos por padrão e aparecem ao passar o mouse sobre o marcador;
+- a mesma revelação ocorre ao focar, mover ou redimensionar o marcador, preservando o uso por teclado e as animações existentes.
+
 ## 1.3.11 - 2026-07-21
 
 ### Adicionado
