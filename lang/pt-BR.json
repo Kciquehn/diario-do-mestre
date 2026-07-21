@@ -203,6 +203,8 @@
   "DMJ.Resource.ImageZoom": "Zoom",
   "DMJ.Resource.ResetImageAdjustment": "Centralizar",
   "DMJ.Resource.Name": "Nome do registro",
+  "DMJ.Resource.HideHeader": "Recolher cabeçalho",
+  "DMJ.Resource.ShowHeader": "Expandir cabeçalho",
   "DMJ.Resource.Linked": "Documento vinculado",
   "DMJ.Resource.OpenLinked": "Abrir documento vinculado",
   "DMJ.Resource.LinkedMissing": "O documento vinculado não foi encontrado.",

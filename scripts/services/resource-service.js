@@ -82,6 +82,10 @@ function imageFraming(data = {}) {
   };
 }
 
+function booleanValue(value) {
+  return value === true || String(value ?? "").trim() === "true";
+}
+
 function boundedFloat(value, minimum, maximum, fallback) {
   const number = Number(value);
   if (!Number.isFinite(number)) return fallback;
@@ -123,8 +127,9 @@ function resourceContent(kind, data) {
   const framing = imageFraming(data);
   const placeType = kind === "place" ? normalizePlaceType(data.placeType) : "";
   const placeLayout = kind === "place" ? normalizePlaceLayout(data.layout) : "";
+  const headerCollapsed = kind === "place" && booleanValue(data.headerCollapsed);
   const fields = RESOURCE_FIELDS[kind].map((field) => `<section data-dmj-resource-field="${field}"><h2>${game.i18n.localize(`DMJ.Resource.Field.${kind}.${field}`)}</h2><p>${fieldHTML(data, field)}</p></section>`).join("\n");
-  return `<article data-dmj-resource data-kind="${kind}" data-place-type="${placeType}" data-place-layout="${placeLayout}" data-image="${escapeHTML(data.image)}" data-image-position-x="${framing.imagePositionX}" data-image-position-y="${framing.imagePositionY}" data-image-zoom="${framing.imageZoom}" data-linked-uuid="${escapeHTML(data.linkedUuid)}"><h1>${escapeHTML(data.name)}</h1>${fields}<section data-dmj-resource-field="notes"><h2>${game.i18n.localize("DMJ.Resource.Notes")}</h2><p>${fieldHTML(data, "notes")}</p></section></article>`;
+  return `<article data-dmj-resource data-kind="${kind}" data-place-type="${placeType}" data-place-layout="${placeLayout}" data-header-collapsed="${headerCollapsed}" data-image="${escapeHTML(data.image)}" data-image-position-x="${framing.imagePositionX}" data-image-position-y="${framing.imagePositionY}" data-image-zoom="${framing.imageZoom}" data-linked-uuid="${escapeHTML(data.linkedUuid)}"><h1>${escapeHTML(data.name)}</h1>${fields}<section data-dmj-resource-field="notes"><h2>${game.i18n.localize("DMJ.Resource.Notes")}</h2><p>${fieldHTML(data, "notes")}</p></section></article>`;
 }
 
 export class ResourceService {
@@ -147,6 +152,7 @@ export class ResourceService {
       isPlace: kind === "place",
       placeType: kind === "place" ? "generic" : "",
       layout: kind === "place" ? "editorial" : "",
+      headerCollapsed: false,
       cityMap: normalizeCityMap(kind === "city" ? page?.getFlag(MODULE_ID, FLAGS.CITY_MAP) : {}),
       notes: "",
       notesHTML: "",
@@ -166,6 +172,7 @@ export class ResourceService {
     data.linkedUuid = ["city", "place"].includes(kind) ? "" : root.dataset.linkedUuid ?? "";
     data.placeType = kind === "place" ? normalizePlaceType(root.dataset.placeType) : "";
     data.layout = kind === "place" ? normalizePlaceLayout(root.dataset.placeLayout) : "";
+    data.headerCollapsed = kind === "place" && booleanValue(root.dataset.headerCollapsed);
     for (const field of [...RESOURCE_FIELDS[kind], "notes"]) {
       const content = root.querySelector(`[data-dmj-resource-field="${field}"] p`);
       if (!content) continue;
@@ -182,7 +189,7 @@ export class ResourceService {
     const name = cleanName(rawName);
     if (!name) throw new Error(game.i18n.localize("DMJ.Resource.Error.Name"));
     const diary = await DiaryService.getOrCreateDiary();
-    const data = { name, image: "", ...IMAGE_FRAMING_DEFAULTS, linkedUuid: "", placeType: kind === "place" ? "generic" : "", layout: kind === "place" ? "editorial" : "", notes: "", notesHTML: "", ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]])) };
+    const data = { name, image: "", ...IMAGE_FRAMING_DEFAULTS, linkedUuid: "", placeType: kind === "place" ? "generic" : "", layout: kind === "place" ? "editorial" : "", headerCollapsed: false, notes: "", notesHTML: "", ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]])) };
     const maxSort = Math.max(0, ...diary.pages.map((page) => page.sort ?? 0));
     const moduleFlags = { [FLAGS.TYPE]: DOCUMENT_TYPES.RESOURCE, kind };
     if (kind === "city") moduleFlags[FLAGS.CITY_MAP] = normalizeCityMap();
@@ -233,6 +240,7 @@ export class ResourceService {
         : "",
       placeType: kind === "place" ? normalizePlaceType(formData.get("placeType")) : "",
       layout: kind === "place" ? normalizePlaceLayout(formData.get("layout")) : "",
+      headerCollapsed: kind === "place" && booleanValue(formData.get("headerCollapsed")),
       ...richFields
     };
     const patch = { name, "text.content": resourceContent(kind, data) };

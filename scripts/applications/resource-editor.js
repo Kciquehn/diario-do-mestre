@@ -1,13 +1,13 @@
 import { MODULE_ID } from "../constants.js";
-import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.4";
+import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.5";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.4.4";
+import { CityMapController } from "./city-map-controller.js?v=1.4.5";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
 const AUTOSAVE_DELAY_MS = 750;
-const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v11.hbs`;
+const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v12.hbs`;
 const CITY_MAP_TEMPLATE = `modules/${MODULE_ID}/templates/city-map-panel-v1.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
   person: "fa-user",
@@ -162,6 +162,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     dropZone?.addEventListener("dragover", (event) => event.preventDefault(), listenerOptions);
     dropZone?.addEventListener("drop", this.#onDrop.bind(this), listenerOptions);
     form.querySelector("[data-action='open-linked']")?.addEventListener("click", () => this.#openLinked(), listenerOptions);
+    form.querySelector("[data-action='toggle-place-header']")?.addEventListener("click", () => this.#togglePlaceHeader(form), listenerOptions);
     const portrait = form.querySelector("[data-action='view-image']");
     portrait?.addEventListener("click", (event) => {
       event.preventDefault();
@@ -369,6 +370,21 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     form.elements.imagePositionY.value = "50";
     form.elements.imageZoom.value = "100";
     this.#applyImageFraming(form);
+    this.#scheduleAutosave();
+  }
+
+  #togglePlaceHeader(form) {
+    const collapsed = form.dataset.headerCollapsed === "true";
+    const nextCollapsed = !collapsed;
+    form.dataset.headerCollapsed = String(nextCollapsed);
+    if (form.elements.headerCollapsed) form.elements.headerCollapsed.value = String(nextCollapsed);
+    const button = form.querySelector("[data-action='toggle-place-header']");
+    const label = game.i18n.localize(nextCollapsed ? "DMJ.Resource.ShowHeader" : "DMJ.Resource.HideHeader");
+    button?.setAttribute("aria-expanded", String(!nextCollapsed));
+    button?.setAttribute("aria-label", label);
+    if (button) button.title = label;
+    const icon = button?.querySelector("i");
+    if (icon) icon.className = `fa-solid ${nextCollapsed ? "fa-chevron-down" : "fa-chevron-up"}`;
     this.#scheduleAutosave();
   }
 

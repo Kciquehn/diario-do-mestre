@@ -203,6 +203,8 @@
   "DMJ.Resource.ImageZoom": "Zoom",
   "DMJ.Resource.ResetImageAdjustment": "Center",
   "DMJ.Resource.Name": "Record name",
+  "DMJ.Resource.HideHeader": "Collapse header",
+  "DMJ.Resource.ShowHeader": "Expand header",
   "DMJ.Resource.Linked": "Linked Document",
   "DMJ.Resource.OpenLinked": "Open linked document",
   "DMJ.Resource.LinkedMissing": "The linked document could not be found.",

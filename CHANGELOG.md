@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.4.5 - 2026-07-21
+
+### Adicionado
+
+- fichas de Local agora possuem um botão para recolher ou expandir o cabeçalho;
+- o estado do cabeçalho é salvo individualmente em cada Local;
+- no layout Lateral, os campos passam a ocupar toda a largura quando o cabeçalho é recolhido.
+
 ## 1.4.4 - 2026-07-21
 
 ### Alterado

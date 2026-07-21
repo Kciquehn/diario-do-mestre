@@ -1,0 +1,55 @@
+<form class="dmj-resource-form" data-form="resource-editor" data-resource-kind="{{kind}}"{{#if isPlace}} data-place-layout="{{layout}}" data-header-collapsed="{{headerCollapsed}}"{{/if}}>
+  <header class="dmj-resource-header{{#if isCity}} dmj-resource-header-city{{/if}}{{#if isPlace}} dmj-resource-header-place{{/if}}">
+    {{#if isPlace}}
+      <input name="headerCollapsed" type="hidden" value="{{headerCollapsed}}">
+      <button type="button" class="dmj-resource-header-toggle" data-action="toggle-place-header" aria-expanded="{{#if headerCollapsed}}false{{else}}true{{/if}}" aria-label="{{#if headerCollapsed}}{{localize "DMJ.Resource.ShowHeader"}}{{else}}{{localize "DMJ.Resource.HideHeader"}}{{/if}}" title="{{#if headerCollapsed}}{{localize "DMJ.Resource.ShowHeader"}}{{else}}{{localize "DMJ.Resource.HideHeader"}}{{/if}}"><i class="fa-solid {{#if headerCollapsed}}fa-chevron-down{{else}}fa-chevron-up{{/if}}" aria-hidden="true"></i></button>
+    {{/if}}
+    {{#unless isCity}}
+      <div class="dmj-resource-portrait">
+        <button type="button" data-action="view-image" data-target="image" data-type="image" aria-label="{{localize "DMJ.Resource.OpenImage"}}" title="{{localize "DMJ.Resource.OpenImageHint"}}">
+          <img src="{{preview}}" data-fallback="{{fallbackPreview}}" alt="" style="--dmj-image-position-x: {{imagePositionX}}%; --dmj-image-position-y: {{imagePositionY}}%; --dmj-image-zoom: {{imageZoomScale}};">
+        </button>
+      </div>
+    {{/unless}}
+    <div class="dmj-resource-identity">
+      <span>{{kindLabel}}</span>
+      <input name="name" type="text" value="{{name}}" maxlength="120" required aria-label="{{localize "DMJ.Resource.Name"}}">
+      {{#if isPlace}}
+        <div class="dmj-place-settings">
+          <label class="dmj-place-type-control"><span>{{localize "DMJ.Resource.PlaceType.Label"}}</span><select name="placeType">{{#each placeTypes}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+          <fieldset class="dmj-place-layout-picker">
+            <legend>{{localize "DMJ.Resource.Layout.Label"}}</legend>
+            {{#each placeLayouts}}<label title="{{hint}}"><input type="radio" name="layout" value="{{id}}" {{#if selected}}checked{{/if}}><span><i class="fa-solid {{icon}}" aria-hidden="true"></i><b>{{label}}</b></span></label>{{/each}}
+          </fieldset>
+        </div>
+      {{/if}}
+      <input name="image" type="hidden" value="{{image}}">
+    </div>
+    {{#unless isCity}}
+      <div class="dmj-resource-image-controls" data-image-framing-controls hidden>
+        <div class="dmj-resource-image-controls-heading">
+          <strong><i class="fa-solid fa-crop-simple" aria-hidden="true"></i> {{localize "DMJ.Resource.AdjustImage"}}</strong>
+          <button type="button" data-action="close-image-framing" aria-label="{{localize "DMJ.Resource.CloseImageAdjustment"}}" title="{{localize "DMJ.Resource.CloseImageAdjustment"}}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
+        <label>{{localize "DMJ.Resource.ImagePositionX"}} <input name="imagePositionX" type="range" min="0" max="100" step="1" value="{{imagePositionX}}" data-image-framing-input><output data-image-framing-output="imagePositionX">{{imagePositionX}}%</output></label>
+        <label>{{localize "DMJ.Resource.ImagePositionY"}} <input name="imagePositionY" type="range" min="0" max="100" step="1" value="{{imagePositionY}}" data-image-framing-input><output data-image-framing-output="imagePositionY">{{imagePositionY}}%</output></label>
+        <label>{{localize "DMJ.Resource.ImageZoom"}} <input name="imageZoom" type="range" min="100" max="300" step="5" value="{{imageZoom}}" data-image-framing-input><output data-image-framing-output="imageZoom">{{imageZoom}}%</output></label>
+        <button type="button" class="dmj-resource-image-reset" data-action="reset-image-framing"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> {{localize "DMJ.Resource.ResetImageAdjustment"}}</button>
+      </div>
+    {{/unless}}
+  </header>
+  {{#unless isCity}}
+    {{#unless isPlace}}
+      <section class="dmj-resource-link">
+        <input name="linkedUuid" type="hidden" value="{{linkedUuid}}">
+        <i class="fa-solid fa-link" aria-hidden="true"></i>
+        <div><strong>{{localize "DMJ.Resource.Linked"}}</strong><button class="dmj-resource-linked-name" type="button" data-action="open-linked" data-linked-name aria-label="{{localize "DMJ.Resource.OpenLinked"}}" {{#unless hasLinked}}disabled{{/unless}}>{{#if hasLinked}}{{linkedName}} ({{linkedType}}){{else}}{{localize "DMJ.Resource.Drop"}}{{/if}}</button></div>
+      </section>
+    {{/unless}}
+  {{/unless}}
+  <main class="dmj-resource-fields">
+    {{#each fields}}<label>{{label}}<div class="dmj-resource-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-resource-rich-editor data-field-name="{{id}}" data-placeholder="{{localize "DMJ.Resource.EditorPlaceholder"}}" aria-label="{{label}}">{{{editorHTML}}}</div><textarea class="dmj-resource-field-value" name="{{id}}" hidden>{{editorHTML}}</textarea></label>{{/each}}
+    <label class="wide">{{localize "DMJ.Resource.Notes"}}<div class="dmj-resource-rich-editor dmj-resource-rich-editor-notes" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-resource-rich-editor data-field-name="notes" data-placeholder="{{localize "DMJ.Resource.EditorPlaceholder"}}" aria-label="{{localize "DMJ.Resource.Notes"}}">{{{notesHTML}}}</div><textarea class="dmj-resource-field-value" name="notes" hidden>{{notesHTML}}</textarea></label>
+  </main>
+  <footer class="dmj-resource-actions"><span><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> {{localize "DMJ.Planner.Private"}}</span><span class="dmj-autosave-status" data-resource-autosave-status data-state="saved" role="status" aria-live="polite"><i class="fa-solid fa-check" aria-hidden="true"></i><span>{{localize "DMJ.Resource.AutosaveSaved"}}</span></span></footer>
+</form>
