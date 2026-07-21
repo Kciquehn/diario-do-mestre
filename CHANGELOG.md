@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.3.9 - 2026-07-21
+
+### Alterado
+
+- fichas de Cidade não exibem nem aceitam mais o bloco “Documento vinculado”;
+- os demais tipos de registro continuam permitindo vínculo com Actor ou Item do Foundry;
+- abertura de imagem e ativação dos listeners agora tratam corretamente fichas sem o campo de vínculo.
+
 ## 1.3.8 - 2026-07-21
 
 ### Corrigido

@@ -21,11 +21,13 @@
       <button type="button" class="dmj-resource-image-reset" data-action="reset-image-framing"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> {{localize "DMJ.Resource.ResetImageAdjustment"}}</button>
     </div>
   </header>
-  <section class="dmj-resource-link">
-    <input name="linkedUuid" type="hidden" value="{{linkedUuid}}">
-    <i class="fa-solid fa-link" aria-hidden="true"></i>
-    <div><strong>{{localize "DMJ.Resource.Linked"}}</strong><button class="dmj-resource-linked-name" type="button" data-action="open-linked" data-linked-name aria-label="{{localize "DMJ.Resource.OpenLinked"}}" {{#unless hasLinked}}disabled{{/unless}}>{{#if hasLinked}}{{linkedName}} ({{linkedType}}){{else}}{{localize "DMJ.Resource.Drop"}}{{/if}}</button></div>
-  </section>
+  {{#unless isCity}}
+    <section class="dmj-resource-link">
+      <input name="linkedUuid" type="hidden" value="{{linkedUuid}}">
+      <i class="fa-solid fa-link" aria-hidden="true"></i>
+      <div><strong>{{localize "DMJ.Resource.Linked"}}</strong><button class="dmj-resource-linked-name" type="button" data-action="open-linked" data-linked-name aria-label="{{localize "DMJ.Resource.OpenLinked"}}" {{#unless hasLinked}}disabled{{/unless}}>{{#if hasLinked}}{{linkedName}} ({{linkedType}}){{else}}{{localize "DMJ.Resource.Drop"}}{{/if}}</button></div>
+    </section>
+  {{/unless}}
   <main class="dmj-resource-fields">
     {{#each fields}}<label>{{label}}<div class="dmj-resource-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-resource-rich-editor data-field-name="{{id}}" data-placeholder="{{localize "DMJ.Resource.EditorPlaceholder"}}" aria-label="{{label}}">{{{editorHTML}}}</div><textarea class="dmj-resource-field-value" name="{{id}}" hidden>{{editorHTML}}</textarea></label>{{/each}}
     <label class="wide">{{localize "DMJ.Resource.Notes"}}<div class="dmj-resource-rich-editor dmj-resource-rich-editor-notes" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-resource-rich-editor data-field-name="notes" data-placeholder="{{localize "DMJ.Resource.EditorPlaceholder"}}" aria-label="{{localize "DMJ.Resource.Notes"}}">{{{notesHTML}}}</div><textarea class="dmj-resource-field-value" name="notes" hidden>{{notesHTML}}</textarea></label>

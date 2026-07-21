@@ -1,8 +1,8 @@
 import { MODULE_ID } from "../constants.js";
-import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.8";
+import { ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.3.9";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.3.8";
+import { CityMapController } from "./city-map-controller.js?v=1.3.9";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
@@ -57,7 +57,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async #prepareViewContext() {
     const data = ResourceService.getData(this.page);
-    const linked = await ResourceService.getLinkedDocument(this.page);
+    const linked = data.isCity ? null : await ResourceService.getLinkedDocument(this.page);
     const cityMapImage = data.isCity ? data.cityMap.image : "";
     return {
       ...data,
@@ -147,8 +147,8 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       if (this.mentionState && !this.mentionState.menu.contains(event.target) && !this.mentionState.editor.contains(event.target)) this.#closeMentionMenu();
     }, listenerOptions);
     const dropZone = form.querySelector(".dmj-resource-link");
-    dropZone.addEventListener("dragover", (event) => event.preventDefault(), listenerOptions);
-    dropZone.addEventListener("drop", this.#onDrop.bind(this), listenerOptions);
+    dropZone?.addEventListener("dragover", (event) => event.preventDefault(), listenerOptions);
+    dropZone?.addEventListener("drop", this.#onDrop.bind(this), listenerOptions);
     form.querySelector("[data-action='open-linked']")?.addEventListener("click", () => this.#openLinked(), listenerOptions);
     const portrait = form.querySelector("[data-action='view-image']");
     portrait.addEventListener("click", (event) => {
@@ -229,7 +229,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     const src = form.elements.image.value.trim() || preview.dataset.fallback;
     if (!src) return;
     try {
-      const uuid = form.elements.linkedUuid.value.trim() || this.page.uuid;
+      const uuid = form.elements.linkedUuid?.value?.trim() || this.page.uuid;
       const title = form.elements.name.value.trim() || this.page.name;
       await new ImagePopout({ src, uuid, window: { title } }).render({ force: true });
     } catch (error) {
