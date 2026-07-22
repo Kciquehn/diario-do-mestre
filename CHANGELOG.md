@@ -2,6 +2,12 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.12.1 - 2026-07-22
+
+### Corrigido
+
+- no layout lateral dos Locais, a faixa de publicação no Diário dos Jogadores agora ocupa uma linha própria na coluna de conteúdo e não cobre mais a imagem ou os campos da ficha.
+
 ## 1.12.0 - 2026-07-22
 
 ### Adicionado
