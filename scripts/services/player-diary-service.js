@@ -1,4 +1,4 @@
-import { DOCUMENT_TYPES, FLAGS, MODULE_ID, RESOURCE_KINDS } from "../constants.js?v=1.12.0";
+import { DOCUMENT_TYPES, FLAGS, MODULE_ID, RESOURCE_KINDS } from "../constants.js?v=1.12.2";
 import { sanitizeRichTextHTML } from "../utils/rich-text.js";
 
 const IMAGE_PATTERN = /^(?!\s*(?:javascript|data):).{0,2000}$/i;

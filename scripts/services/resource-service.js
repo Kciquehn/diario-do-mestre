@@ -1,7 +1,7 @@
-import { DOCUMENT_TYPES, FLAGS, MODULE_ID, RESOURCE_KINDS } from "../constants.js?v=1.12.0";
-import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.12.0";
+import { DOCUMENT_TYPES, FLAGS, MODULE_ID, RESOURCE_KINDS } from "../constants.js?v=1.12.2";
+import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.12.2";
 import { DiaryService } from "./diary-service.js";
-import { PlayerDiaryService } from "./player-diary-service.js?v=1.12.0";
+import { PlayerDiaryService } from "./player-diary-service.js?v=1.12.2";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 
 const DOCUMENT_UUID_PATTERN = /^[A-Za-z0-9._-]{1,500}$/;
@@ -12,7 +12,7 @@ const CITY_MAP_LOCATION_SIZE_MIN = 0.6;
 const CITY_MAP_LOCATION_SIZE_MAX = 2;
 const documentImportPromises = new Map();
 
-export const PLACE_TYPES = Object.freeze([
+const KNOWN_PLACE_TYPES = Object.freeze([
   "generic",
   "shop",
   "building",
@@ -24,6 +24,7 @@ export const PLACE_TYPES = Object.freeze([
   "landmark",
   "faction"
 ]);
+export const PLACE_TYPES = Object.freeze(["faction"]);
 
 export const PLACE_LAYOUTS = Object.freeze([
   "editorial",
@@ -74,7 +75,7 @@ function fieldHTML(data, field) {
 
 export function normalizePlaceType(value) {
   const placeType = String(value ?? "").trim();
-  return PLACE_TYPES.includes(placeType) ? placeType : "generic";
+  return KNOWN_PLACE_TYPES.includes(placeType) ? placeType : "faction";
 }
 
 export function normalizePlaceLayout(value) {
@@ -207,7 +208,7 @@ export class ResourceService {
         : "",
       isCity: kind === "city",
       isPlace: kind === "place",
-      placeType: kind === "place" ? "generic" : "",
+      placeType: kind === "place" ? "faction" : "",
       layout: kind === "place" ? "editorial" : "",
       headerCollapsed: false,
       commerce,
@@ -251,7 +252,7 @@ export class ResourceService {
     const linkedUuid = DOCUMENT_UUID_PATTERN.test(String(options.linkedUuid ?? "").trim()) ? String(options.linkedUuid).trim() : "";
     const commerce = normalizeCommerce(kind === "place" ? options.commerce : {});
     const publication = normalizePublication(options.publication, commerce);
-    const data = { name, image: String(options.image ?? "").trim().slice(0, 2000), ...IMAGE_FRAMING_DEFAULTS, linkedUuid, placeType: kind === "place" ? normalizePlaceType(options.placeType) : "", layout: kind === "place" ? normalizePlaceLayout(options.layout) : "", headerCollapsed: false, commerce, publication, notes: "", notesHTML: "", ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]])) };
+    const data = { name, image: String(options.image ?? "").trim().slice(0, 2000), ...IMAGE_FRAMING_DEFAULTS, linkedUuid, placeType: kind === "place" ? normalizePlaceType(options.placeType ?? "faction") : "", layout: kind === "place" ? normalizePlaceLayout(options.layout) : "", headerCollapsed: false, commerce, publication, notes: "", notesHTML: "", ...Object.fromEntries(RESOURCE_FIELDS[kind].flatMap((field) => [[field, ""], [`${field}HTML`, ""]])) };
     const maxSort = Math.max(0, ...diary.pages.map((page) => page.sort ?? 0));
     const moduleFlags = { [FLAGS.TYPE]: DOCUMENT_TYPES.RESOURCE, kind };
     if (kind === "city") moduleFlags[FLAGS.CITY_MAP] = normalizeCityMap();

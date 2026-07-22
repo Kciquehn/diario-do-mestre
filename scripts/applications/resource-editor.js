@@ -1,9 +1,9 @@
 import { MODULE_ID } from "../constants.js";
-import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.12.0";
-import { getResourceFields, PLACE_LAYOUTS, PLACE_TYPES, ResourceService } from "../services/resource-service.js?v=1.12.0";
+import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.12.2";
+import { getResourceFields, PLACE_LAYOUTS, PLACE_TYPES, ResourceService } from "../services/resource-service.js?v=1.12.2";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.12.0";
+import { CityMapController } from "./city-map-controller.js?v=1.12.2";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
@@ -80,6 +80,9 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     const data = ResourceService.getData(this.page);
     const isPlaceFaction = data.isPlace && data.placeType === "faction";
     const resourceFields = getResourceFields(data.kind, data.placeType);
+    const availablePlaceTypes = data.isPlace
+      ? [...new Set([...(PLACE_TYPES.includes(data.placeType) ? [] : [data.placeType]), ...PLACE_TYPES])]
+      : [];
     const itemPilesStatus = ItemPilesIntegration.getStatus();
     const merchants = data.isPlace ? ItemPilesIntegration.getMerchants() : [];
     const merchantOptions = merchants.map((actor) => ({
@@ -102,11 +105,11 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       isPerson: data.kind === "person",
       isPlaceFaction,
       kindLabel: game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`),
-      placeTypes: data.isPlace ? PLACE_TYPES.map((id) => ({
+      placeTypes: availablePlaceTypes.map((id) => ({
         id,
         label: game.i18n.localize(`DMJ.Resource.PlaceType.${id}`),
         selected: id === data.placeType
-      })) : [],
+      })),
       placeLayouts: data.isPlace ? PLACE_LAYOUTS.map((id) => ({
         id,
         icon: id === "panorama" ? "fa-image" : id === "compact" ? "fa-table-cells" : id === "sidebar" ? "fa-table-columns" : "fa-newspaper",

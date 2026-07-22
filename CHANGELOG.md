@@ -2,6 +2,13 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.12.2 - 2026-07-22
+
+### Alterado
+
+- novos Locais agora oferecem apenas o tipo **Facção**;
+- tipos antigos continuam preservados somente nas fichas que já os utilizavam, evitando perda de dados e mantendo comerciantes do Item Piles funcionais.
+
 ## 1.12.1 - 2026-07-22
 
 ### Corrigido
