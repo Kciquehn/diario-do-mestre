@@ -1,6 +1,6 @@
 {
   "name": "diario-do-mestre",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "private": true,
   "type": "module",
   "description": "Ferramentas locais de validação e empacotamento do módulo Diário do Mestre.",

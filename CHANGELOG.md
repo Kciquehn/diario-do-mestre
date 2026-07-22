@@ -2,6 +2,12 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.11.1 - 2026-07-22
+
+### Alterado
+
+- o controle de redimensionamento dos pins no mapa da Cidade agora aparece mais próximo do nome do local.
+
 ## 1.11.0 - 2026-07-22
 
 ### Adicionado
