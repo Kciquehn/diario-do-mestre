@@ -1,9 +1,9 @@
 import { MODULE_ID } from "../constants.js";
-import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.11.0";
-import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.11.0";
+import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.12.0";
+import { getResourceFields, PLACE_LAYOUTS, PLACE_TYPES, ResourceService } from "../services/resource-service.js?v=1.12.0";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.11.0";
+import { CityMapController } from "./city-map-controller.js?v=1.12.0";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
@@ -27,6 +27,14 @@ const PERSON_FIELD_ICONS = Object.freeze({
   motivation: "fa-bullseye",
   secrets: "fa-user-secret"
 });
+const PLACE_FACTION_FIELD_ICONS = Object.freeze({
+  leadership: "fa-crown",
+  members: "fa-users",
+  goals: "fa-bullseye",
+  influence: "fa-landmark",
+  relations: "fa-handshake",
+  factionSecrets: "fa-user-secret"
+});
 
 function normalizeSearch(value) {
   return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase(game.i18n.lang).trim();
@@ -44,6 +52,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     this.cityMapActivationFrame = null;
     this.savePromise = null;
     this.saveErrorNotified = false;
+    this.placeTypeRefreshPromise = null;
     this.slashState = null;
     this.mentionState = null;
     this.embeddedRoot = null;
@@ -69,6 +78,8 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async #prepareViewContext() {
     const data = ResourceService.getData(this.page);
+    const isPlaceFaction = data.isPlace && data.placeType === "faction";
+    const resourceFields = getResourceFields(data.kind, data.placeType);
     const itemPilesStatus = ItemPilesIntegration.getStatus();
     const merchants = data.isPlace ? ItemPilesIntegration.getMerchants() : [];
     const merchantOptions = merchants.map((actor) => ({
@@ -89,6 +100,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     return {
       ...data,
       isPerson: data.kind === "person",
+      isPlaceFaction,
       kindLabel: game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`),
       placeTypes: data.isPlace ? PLACE_TYPES.map((id) => ({
         id,
@@ -109,12 +121,15 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       merchantOptions,
       hasCommerceMerchant: Boolean(data.commerce.merchantUuid),
       publicationPublished: data.publication.published,
-      fields: RESOURCE_FIELDS[data.kind].map((field, index) => ({
+      fields: resourceFields.map((field, index) => ({
         id: field,
         label: game.i18n.localize(`DMJ.Resource.Field.${data.kind}.${field}`),
         editorHTML: sanitizeRichTextHTML(data[`${field}HTML`] ?? plainTextToRichHTML(data[field])),
-        icon: data.kind === "person" ? PERSON_FIELD_ICONS[field] ?? "fa-pen" : "",
-        expanded: data.kind === "person" && index === 0
+        icon: data.kind === "person"
+          ? PERSON_FIELD_ICONS[field] ?? "fa-pen"
+          : isPlaceFaction ? PLACE_FACTION_FIELD_ICONS[field] ?? "fa-pen" : "",
+        expanded: data.kind === "person" && index === 0,
+        wide: isPlaceFaction && field === "members"
       })),
       notesHTML: sanitizeRichTextHTML(data.notesHTML ?? plainTextToRichHTML(data.notes)),
       preview: data.image || cityMapImage || linked?.img || "icons/svg/mystery-man.svg",
@@ -539,10 +554,36 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     if (event.target.matches?.("select[name='placeType']")) {
       event.target.form.dataset.placeType = event.target.value;
+      this.#scheduleAutosave();
+      void this.#refreshPlaceTypeView();
+      return;
     }
     const editor = event.target.closest?.("[data-resource-rich-editor]");
     if (editor) this.#handleEditorMutation(editor);
     this.#scheduleAutosave();
+  }
+
+  async #refreshPlaceTypeView() {
+    if (this.placeTypeRefreshPromise) return this.placeTypeRefreshPromise;
+    const embeddedRoot = this.embeddedRoot;
+    const workspaceHost = this.workspaceHost;
+    const refreshTask = (async () => {
+      const saved = await this.#saveResource();
+      if (!saved) return false;
+      if (embeddedRoot) {
+        if (this.embeddedRoot !== embeddedRoot || !embeddedRoot.isConnected) return true;
+        await this.mount(embeddedRoot, workspaceHost);
+      } else if (this.rendered) {
+        await this.render({ force: true });
+      }
+      return true;
+    })();
+    this.placeTypeRefreshPromise = refreshTask;
+    try {
+      return await refreshTask;
+    } finally {
+      if (this.placeTypeRefreshPromise === refreshTask) this.placeTypeRefreshPromise = null;
+    }
   }
 
   #onEditorPaste(event) {

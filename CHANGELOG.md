@@ -2,6 +2,15 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.12.0 - 2026-07-22
+
+### Adicionado
+
+- o seletor de tipo de Local agora possui a opção **Facção**;
+- Locais do tipo Facção usam uma ficha própria para liderança, integrantes, objetivos, influência, relações e segredos;
+- a troca entre Facção e os demais tipos preserva os textos já salvos em cada formato;
+- Facções publicadas no Diário dos Jogadores exibem apenas as informações públicas da organização.
+
 ## 1.11.1 - 2026-07-22
 
 ### Alterado

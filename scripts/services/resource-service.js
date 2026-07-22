@@ -1,7 +1,7 @@
-import { DOCUMENT_TYPES, FLAGS, MODULE_ID, RESOURCE_KINDS } from "../constants.js?v=1.11.0";
-import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.11.0";
+import { DOCUMENT_TYPES, FLAGS, MODULE_ID, RESOURCE_KINDS } from "../constants.js?v=1.12.0";
+import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.12.0";
 import { DiaryService } from "./diary-service.js";
-import { PlayerDiaryService } from "./player-diary-service.js?v=1.11.0";
+import { PlayerDiaryService } from "./player-diary-service.js?v=1.12.0";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 
 const DOCUMENT_UUID_PATTERN = /^[A-Za-z0-9._-]{1,500}$/;
@@ -21,7 +21,8 @@ export const PLACE_TYPES = Object.freeze([
   "district",
   "route",
   "ruin",
-  "landmark"
+  "landmark",
+  "faction"
 ]);
 
 export const PLACE_LAYOUTS = Object.freeze([
@@ -31,16 +32,24 @@ export const PLACE_LAYOUTS = Object.freeze([
   "sidebar"
 ]);
 
+const PLACE_STANDARD_FIELDS = Object.freeze(["region", "atmosphere", "features", "inhabitants", "secrets"]);
+const PLACE_FACTION_FIELDS = Object.freeze(["leadership", "members", "goals", "influence", "relations", "factionSecrets"]);
+
 export const RESOURCE_FIELDS = Object.freeze({
   party: ["role", "biography", "history", "personality", "goals", "relationships"],
   person: ["role", "appearance", "personality", "motivation", "secrets"],
-  place: ["region", "atmosphere", "features", "inhabitants", "secrets"],
+  place: [...PLACE_STANDARD_FIELDS, ...PLACE_FACTION_FIELDS],
   city: ["overview", "districts", "government", "population", "secrets"],
   item: ["category", "appearance", "effect", "location", "secrets"],
   encounter: ["setup", "participants", "challenge", "rewards", "consequences"],
   faction: ["objective", "resources", "allies", "enemies", "secrets"],
   post: ["summary", "content"]
 });
+
+export function getResourceFields(kind, placeType = "") {
+  if (kind !== "place") return RESOURCE_FIELDS[kind] ?? [];
+  return normalizePlaceType(placeType) === "faction" ? PLACE_FACTION_FIELDS : PLACE_STANDARD_FIELDS;
+}
 
 function requireGameMaster() {
   if (!game.user?.isGM) throw new Error(game.i18n.localize("DMJ.Error.GMOnly"));
@@ -381,8 +390,11 @@ export class ResourceService {
     const kind = RESOURCE_KINDS.includes(rawKind) ? rawKind : "person";
     const name = cleanName(formData.get("name"));
     if (!name) throw new Error(game.i18n.localize("DMJ.Resource.Error.Name"));
+    const currentData = this.getData(page);
     const richFields = Object.fromEntries([...RESOURCE_FIELDS[kind], "notes"].flatMap((field) => {
-      const html = sanitizeRichTextHTML(formData.get(field));
+      const html = formData.has(field)
+        ? sanitizeRichTextHTML(formData.get(field))
+        : sanitizeRichTextHTML(currentData[`${field}HTML`] ?? plainTextToRichHTML(currentData[field]));
       return [[field, richTextToPlainText(html).trim()], [`${field}HTML`, html]];
     }));
     const currentCommerce = normalizeCommerce(page.getFlag(MODULE_ID, FLAGS.COMMERCE));

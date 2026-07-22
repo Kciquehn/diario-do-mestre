@@ -16,6 +16,7 @@ Um preparador de aventuras privado, independente de sistema e integrado ao Found
 - referências persistentes por UUID, sem duplicar Documents do sistema;
 - importação por arrastar e soltar de Actors e Itens do mundo para fichas vinculadas na Biblioteca do Mestre;
 - biblioteca reutilizável de personagens, locais, cidades, itens, encontros, facções e publicações;
+- Locais do tipo **Facção** com ficha própria para liderança, integrantes, objetivos, influência, relações e segredos;
 - cidades com mapas privados navegáveis, zoom e marcadores vinculados às fichas de locais;
 - imagens escolhidas pelo File Picker, abertas no visualizador do Foundry e com enquadramento ajustável por zoom e posição;
 - salvamento automático do roteiro e das fichas da biblioteca;

@@ -1,6 +1,6 @@
 import { MODULE_ID, RESOURCE_KINDS } from "../constants.js";
 import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.11.0";
-import { ResourceService } from "../services/resource-service.js?v=1.11.0";
+import { ResourceService } from "../services/resource-service.js?v=1.12.0";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
 
 const { ApplicationV2, DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;

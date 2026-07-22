@@ -81,10 +81,28 @@
       </details>
     </main>
   {{else}}
-    <main class="dmj-resource-fields">
-      {{#each fields}}<label>{{label}}<div class="dmj-resource-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-resource-rich-editor data-field-name="{{id}}" data-placeholder="{{localize "DMJ.Resource.EditorPlaceholder"}}" aria-label="{{label}}">{{{editorHTML}}}</div><textarea class="dmj-resource-field-value" name="{{id}}" hidden>{{editorHTML}}</textarea></label>{{/each}}
-      <label class="wide">{{localize "DMJ.Resource.Notes"}}<div class="dmj-resource-rich-editor dmj-resource-rich-editor-notes" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-resource-rich-editor data-field-name="notes" data-placeholder="{{localize "DMJ.Resource.EditorPlaceholder"}}" aria-label="{{localize "DMJ.Resource.Notes"}}">{{{notesHTML}}}</div><textarea class="dmj-resource-field-value" name="notes" hidden>{{notesHTML}}</textarea></label>
-    </main>
+    {{#if isPlaceFaction}}
+      <main class="dmj-faction-fields">
+        <header class="dmj-faction-intro"><i class="fa-solid fa-people-group" aria-hidden="true"></i><span><strong>{{localize "DMJ.Resource.Faction.Title"}}</strong><small>{{localize "DMJ.Resource.Faction.Hint"}}</small></span></header>
+        {{#each fields}}
+          <section class="dmj-faction-section{{#if wide}} wide{{/if}}" data-faction-field="{{id}}">
+            <header><i class="fa-solid {{icon}}" aria-hidden="true"></i><h2>{{label}}</h2></header>
+            <div class="dmj-resource-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-resource-rich-editor data-field-name="{{id}}" data-placeholder="{{localize "DMJ.Resource.EditorPlaceholder"}}" aria-label="{{label}}">{{{editorHTML}}}</div>
+            <textarea class="dmj-resource-field-value" name="{{id}}" hidden>{{editorHTML}}</textarea>
+          </section>
+        {{/each}}
+        <section class="dmj-faction-section dmj-faction-notes wide">
+          <header><i class="fa-solid fa-note-sticky" aria-hidden="true"></i><h2>{{localize "DMJ.Resource.Notes"}}</h2></header>
+          <div class="dmj-resource-rich-editor dmj-resource-rich-editor-notes" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-resource-rich-editor data-field-name="notes" data-placeholder="{{localize "DMJ.Resource.EditorPlaceholder"}}" aria-label="{{localize "DMJ.Resource.Notes"}}">{{{notesHTML}}}</div>
+          <textarea class="dmj-resource-field-value" name="notes" hidden>{{notesHTML}}</textarea>
+        </section>
+      </main>
+    {{else}}
+      <main class="dmj-resource-fields">
+        {{#each fields}}<label>{{label}}<div class="dmj-resource-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-resource-rich-editor data-field-name="{{id}}" data-placeholder="{{localize "DMJ.Resource.EditorPlaceholder"}}" aria-label="{{label}}">{{{editorHTML}}}</div><textarea class="dmj-resource-field-value" name="{{id}}" hidden>{{editorHTML}}</textarea></label>{{/each}}
+        <label class="wide">{{localize "DMJ.Resource.Notes"}}<div class="dmj-resource-rich-editor dmj-resource-rich-editor-notes" contenteditable="true" role="textbox" aria-multiline="true" aria-keyshortcuts="Control+B Control+I" data-resource-rich-editor data-field-name="notes" data-placeholder="{{localize "DMJ.Resource.EditorPlaceholder"}}" aria-label="{{localize "DMJ.Resource.Notes"}}">{{{notesHTML}}}</div><textarea class="dmj-resource-field-value" name="notes" hidden>{{notesHTML}}</textarea></label>
+      </main>
+    {{/if}}
   {{/if}}
   <footer class="dmj-resource-actions"><span><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> {{localize "DMJ.Planner.Private"}}</span><span class="dmj-autosave-status" data-resource-autosave-status data-state="saved" role="status" aria-live="polite"><i class="fa-solid fa-check" aria-hidden="true"></i><span>{{localize "DMJ.Resource.AutosaveSaved"}}</span></span></footer>
 </form>

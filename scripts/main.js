@@ -1,9 +1,9 @@
-import { SessionDashboard } from "./applications/session-dashboard.js?v=1.11.0";
-import { PlayerDiary } from "./applications/player-diary.js?v=1.11.0";
+import { SessionDashboard } from "./applications/session-dashboard.js?v=1.12.0";
+import { PlayerDiary } from "./applications/player-diary.js?v=1.12.0";
 import { DOCUMENT_TYPES, FLAGS, MODULE_ID, SETTINGS } from "./constants.js";
 import { ItemPilesIntegration } from "./integrations/item-piles.js?v=1.11.0";
 import { DiaryService } from "./services/diary-service.js";
-import { PlayerDiaryService } from "./services/player-diary-service.js";
+import { PlayerDiaryService } from "./services/player-diary-service.js?v=1.12.0";
 import { CLUE_DRAG_TYPE, ClueService } from "./services/clue-service.js";
 import { getJournalDirectory } from "./compat/journal-directory.js";
 import { getElementDocument, isPopoutAvailable, popoutApplication, registerPopoutCompatibility } from "./compat/popout.js";

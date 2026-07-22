@@ -1,4 +1,4 @@
-import { DOCUMENT_TYPES, FLAGS, MODULE_ID, RESOURCE_KINDS } from "../constants.js?v=1.11.0";
+import { DOCUMENT_TYPES, FLAGS, MODULE_ID, RESOURCE_KINDS } from "../constants.js?v=1.12.0";
 import { sanitizeRichTextHTML } from "../utils/rich-text.js";
 
 const IMAGE_PATTERN = /^(?!\s*(?:javascript|data):).{0,2000}$/i;
@@ -12,6 +12,7 @@ const PUBLIC_FIELDS = Object.freeze({
   faction: ["objective", "resources", "allies"],
   post: ["summary", "content"]
 });
+const PUBLIC_PLACE_FACTION_FIELDS = Object.freeze(["leadership", "members", "goals", "influence", "relations"]);
 
 function requireGameMaster() {
   if (!game.user?.isGM) throw new Error(game.i18n.localize("DMJ.Error.GMOnly"));
@@ -32,12 +33,14 @@ function safeImage(value) {
 }
 
 function publicArticleContent(data) {
-  const fields = PUBLIC_FIELDS[data.kind] ?? [];
+  const fields = data.kind === "place" && data.placeType === "faction"
+    ? PUBLIC_PLACE_FACTION_FIELDS
+    : PUBLIC_FIELDS[data.kind] ?? [];
   const sections = fields.map((field) => {
     const html = sanitizeRichTextHTML(data[`${field}HTML`] ?? "");
     return html ? `<section data-dmj-public-field="${field}">${html}</section>` : "";
   }).join("");
-  return `<article data-dmj-public-article data-kind="${escapeHTML(data.kind)}" data-image="${escapeHTML(safeImage(data.image))}"><h1>${escapeHTML(data.name)}</h1>${sections}</article>`;
+  return `<article data-dmj-public-article data-kind="${escapeHTML(data.kind)}" data-place-type="${escapeHTML(data.placeType ?? "")}" data-image="${escapeHTML(safeImage(data.image))}"><h1>${escapeHTML(data.name)}</h1>${sections}</article>`;
 }
 
 function pageType(page) {
