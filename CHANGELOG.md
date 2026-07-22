@@ -2,6 +2,136 @@
 
 Todas as alterações relevantes deste projeto serão documentadas neste arquivo.
 
+## 1.11.0 - 2026-07-22
+
+### Adicionado
+
+- o Diário dos Jogadores agora exibe a categoria **Comércio** sempre que o Item Piles ou Item Piles: Symbaroum estiver ativo;
+- comerciantes existentes no provedor ativo são carregados automaticamente como fichas consultáveis, sem exigir uma publicação duplicada;
+- fichas de comércio já publicadas pelo Diário continuam sendo reutilizadas e não aparecem duas vezes;
+- criações, exclusões e alterações em comerciantes ou seus itens atualizam o Diário dos Jogadores aberto.
+
+## 1.10.1 - 2026-07-22
+
+### Adicionado
+
+- a imagem da aventura na barra lateral do roteiro agora pode ser redimensionada verticalmente pelo mouse;
+- a alça também aceita as setas para cima e para baixo, com limites seguros entre 72 e 420 pixels;
+- a altura escolhida é salva automaticamente em cada aventura e reaplicada ao abrir o roteiro.
+
+## 1.10.0 - 2026-07-21
+
+### Adicionado
+
+- comércios publicados agora exibem o catálogo do Item Piles diretamente dentro do Diário dos Jogadores;
+- jogadores podem escolher preço, quantidade e comprar para o personagem que lhes foi atribuído sem sair do diário;
+- estoque, preços alternativos, recursos disponíveis e estado aberto ou fechado continuam sendo calculados pelo Item Piles ou Item Piles: Symbaroum.
+
+### Segurança
+
+- a compra usa exclusivamente a API pública `tradeItems` do provedor ativo, preservando as regras, moedas, transferências, sockets e validações do Item Piles;
+- UUID, item, personagem, estoque, preço e disponibilidade são revalidados imediatamente antes da operação.
+
+## 1.9.3 - 2026-07-21
+
+### Alterado
+
+- comerciantes criados pela Biblioteca do Mestre agora são organizados automaticamente na pasta de Atores **Comerciantes do Mestre**;
+- a pasta é criada apenas quando necessário e reutilizada nas próximas criações, inclusive com Item Piles: Symbaroum.
+
+## 1.9.2 - 2026-07-21
+
+### Alterado
+
+- fichas de Personagem agora usam um layout compacto, com retrato, identidade e Actor vinculado reunidos no cabeçalho;
+- papel, aparência, personalidade, motivação, segredos e anotações privadas foram organizados em seções recolhíveis;
+- publicação no Diário dos Jogadores, edição enriquecida, comandos e salvamento automático foram preservados no novo layout.
+
+## 1.9.1 - 2026-07-21
+
+### Corrigido
+
+- fichas de Cidade agora abrem a aba imediatamente e carregam o mapa após a interface ficar visível;
+- mapas de cidades mantidos em abas ocultas não são inicializados durante uma nova renderização do Diário;
+- a área do mapa foi isolada para reduzir recálculos de layout e o uso permanente de camadas gráficas pesadas.
+
+## 1.9.0 - 2026-07-21
+
+### Adicionado
+
+- a criação de registros da Biblioteca do Mestre agora oferece **Comerciante/Loja** quando uma variante compatível do Item Piles está ativa;
+- o novo fluxo usa a API pública do Item Piles para criar um Actor comerciante com os padrões do sistema e uma ficha de Local do tipo Loja já vinculada a ele.
+
+### Segurança
+
+- a opção permanece oculta quando não há provedor compatível, quando a integração ainda não está pronta ou quando as duas variantes estão ativas simultaneamente;
+- se a criação da ficha da biblioteca falhar, o Actor recém-criado é removido para não deixar dados incompletos no mundo.
+
+## 1.8.0 - 2026-07-21
+
+### Adicionado
+
+- Actors e Itens do mundo agora podem ser arrastados para a Biblioteca do Mestre para criar fichas vinculadas com nome, imagem e UUID;
+- soltar um documento no Diário dos Jogadores cria ou reutiliza a ficha privada correspondente e a publica automaticamente;
+- Actors com proprietário jogador são classificados como Personagens do grupo; os demais são criados como Personagens comuns.
+
+### Alterado
+
+- páginas públicas agora guardam a referência da ficha privada de origem, evitando duplicações e preservando a sincronização ao editar, despublicar ou excluir.
+
+## 1.7.0 - 2026-07-21
+
+### Adicionado
+
+- seção permanente **O Grupo** como primeira opção do menu Explorar no Diário dos Jogadores;
+- novo registro **Personagem do grupo**, com imagem, Actor vinculado, papel, biografia, história, personalidade, objetivos e relações;
+- fichas publicadas do grupo podem ser pesquisadas, abertas no mural e consultadas em páginas detalhadas.
+
+## 1.6.2 - 2026-07-21
+
+### Alterado
+
+- o cabeçalho da interface pública agora exibe “Diário dos Jogadores” em vez do nome do mundo.
+
+## 1.6.1 - 2026-07-21
+
+### Alterado
+
+- a configuração de comerciante nas fichas de Local e os recursos de comércio no Diário dos Jogadores agora só aparecem quando o Item Piles ou o Item Piles: Symbaroum está ativo no mundo.
+
+## 1.6.0 - 2026-07-21
+
+### Adicionado
+
+- Diário dos Jogadores redesenhado como mural social e wiki pesquisável da campanha;
+- busca por nome e conteúdo, navegação por categorias e páginas detalhadas de cada descoberta;
+- novo registro de Publicação para relatos de sessão, notícias e crônicas;
+- publicação opcional de personagens, locais, cidades, itens, encontros, facções e comércios.
+
+### Segurança
+
+- cada tipo possui uma lista explícita de campos públicos; segredos e anotações privadas nunca são copiados para o diário dos jogadores;
+- páginas públicas antigas de comércio continuam disponíveis e são migradas ao serem atualizadas.
+
+## 1.5.1 - 2026-07-21
+
+### Alterado
+
+- o cadeado de um marcador travado agora fica oculto em repouso e reaparece somente ao passar o mouse ou focar o marcador.
+
+## 1.5.0 - 2026-07-21
+
+### Adicionado
+
+- Diário dos Jogadores com uma área pública de comércios conhecidos;
+- vínculo entre uma ficha de Local do tipo Loja e um comerciante do Item Piles;
+- suporte opcional ao Item Piles original e ao Item Piles: Symbaroum.
+
+### Segurança
+
+- somente localização, descrição, serviços, nome e imagem são publicados; segredos e anotações privadas permanecem no Diário do Mestre;
+- a integração é bloqueada quando as duas variantes do Item Piles estão ativas simultaneamente.
+
 ## 1.4.10 - 2026-07-21
 
 ### Alterado

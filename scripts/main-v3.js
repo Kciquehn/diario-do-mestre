@@ -1,2 +1,2 @@
 // Compatibilidade com manifestos mantidos em memória por instalações anteriores.
-import "./main.js?v=1.4.10";
+import "./main.js?v=1.11.0";

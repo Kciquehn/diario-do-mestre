@@ -1,11 +1,46 @@
-import { SessionDashboard } from "./applications/session-dashboard.js?v=1.4.10";
+import { SessionDashboard } from "./applications/session-dashboard.js?v=1.11.0";
+import { PlayerDiary } from "./applications/player-diary.js?v=1.11.0";
 import { DOCUMENT_TYPES, FLAGS, MODULE_ID, SETTINGS } from "./constants.js";
+import { ItemPilesIntegration } from "./integrations/item-piles.js?v=1.11.0";
 import { DiaryService } from "./services/diary-service.js";
+import { PlayerDiaryService } from "./services/player-diary-service.js";
 import { CLUE_DRAG_TYPE, ClueService } from "./services/clue-service.js";
 import { getJournalDirectory } from "./compat/journal-directory.js";
 import { getElementDocument, isPopoutAvailable, popoutApplication, registerPopoutCompatibility } from "./compat/popout.js";
 
 let dashboard;
+let playerDiary;
+let playerDiaryRefreshTimer = null;
+
+function refreshPlayerDiary() {
+  if (!playerDiary?.rendered) return;
+  if (playerDiaryRefreshTimer !== null) globalThis.clearTimeout(playerDiaryRefreshTimer);
+  playerDiaryRefreshTimer = globalThis.setTimeout(() => {
+    playerDiaryRefreshTimer = null;
+    if (playerDiary?.rendered) void playerDiary.render({ force: true });
+  }, 100);
+}
+
+function refreshPlayerDiaryForActor(actor) {
+  if (!playerDiary?.rendered || !actor?.uuid) return;
+  const linked = PlayerDiaryService.getArticlePages().some(
+    (page) => page.getFlag(MODULE_ID, FLAGS.MERCHANT_UUID) === actor.uuid
+  );
+  let merchant = false;
+  const status = ItemPilesIntegration.getStatus();
+  if (status.available) {
+    try {
+      merchant = status.api.isItemPileMerchant(actor);
+    } catch {
+      merchant = false;
+    }
+  }
+  if (linked || merchant) refreshPlayerDiary();
+}
+
+function refreshPlayerDiaryForItem(item) {
+  if (item?.parent?.documentName === "Actor") refreshPlayerDiaryForActor(item.parent);
+}
 
 function handleClueCanvasDrop(targetCanvas, data) {
   if (data?.type !== CLUE_DRAG_TYPE) return;
@@ -53,7 +88,7 @@ function requireGameMasterUI() {
 }
 
 function injectJournalLauncher(app, html) {
-  if (!game.user?.isGM) return;
+  if (!game.user) return;
 
   const isElement = (value) => value?.nodeType === 1 && typeof value.querySelector === "function";
   const fallbackDocument = getElementDocument(app?.element?.[0] ?? app?.element);
@@ -69,11 +104,15 @@ function injectJournalLauncher(app, html) {
   const footer = getElementDocument(root).createElement("div");
   footer.className = "dmj-sidebar-launcher";
   footer.setAttribute(`data-${MODULE_ID}-launcher`, "true");
-  footer.innerHTML = `<button type="button">
+  footer.innerHTML = `${game.user.isGM ? `<button type="button" data-action="open-gm-diary">
     <i class="fa-solid fa-book-journal-whills" aria-hidden="true"></i>
     <span>${game.i18n.localize("DMJ.App.Open")}</span>
+  </button>` : ""}<button type="button" data-action="open-player-diary">
+    <i class="fa-solid fa-book-open-reader" aria-hidden="true"></i>
+    <span>${game.i18n.localize("DMJ.PlayerDiary.Open")}</span>
   </button>`;
-  footer.querySelector("button").addEventListener("click", () => game.modules.get(MODULE_ID).api.open());
+  footer.querySelector("[data-action='open-gm-diary']")?.addEventListener("click", () => game.modules.get(MODULE_ID).api.open());
+  footer.querySelector("[data-action='open-player-diary']")?.addEventListener("click", () => game.modules.get(MODULE_ID).api.openPlayerDiary());
 
   const directoryList = root.querySelector(".directory-list");
   if (directoryList) directoryList.insertAdjacentElement("afterend", footer);
@@ -100,6 +139,7 @@ Hooks.once("init", () => {
     type: SessionDashboard,
     restricted: true
   });
+  for (const provider of ItemPilesIntegration.providerDefinitions) Hooks.on(provider.readyHook, refreshPlayerDiary);
 });
 
 Hooks.once("setup", () => {
@@ -113,6 +153,13 @@ Hooks.once("setup", () => {
     },
     getDiary() {
       return game.user?.isGM ? DiaryService.getDiary() : null;
+    },
+    getPlayerDiary() {
+      return PlayerDiaryService.getDiary();
+    },
+    openPlayerDiary() {
+      playerDiary ??= new PlayerDiary();
+      return playerDiary.render({ force: true });
     },
     getSessions() {
       return game.user?.isGM ? DiaryService.getSessions() : [];
@@ -164,8 +211,23 @@ Hooks.once("setup", () => {
 Hooks.once("ready", () => {
   const directory = getJournalDirectory();
   injectJournalLauncher(directory, directory?.element);
+  const itemPilesStatus = ItemPilesIntegration.getStatus();
+  if (game.user?.isGM && itemPilesStatus.conflict) ui.notifications.warn(game.i18n.localize("DMJ.ItemPiles.Error.Conflict"));
 });
 
 Hooks.on("renderApplicationV2", (app, element) => {
   if (app === getJournalDirectory()) injectJournalLauncher(app, element);
 });
+
+for (const hook of ["createJournalEntryPage", "updateJournalEntryPage", "deleteJournalEntryPage"]) {
+  Hooks.on(hook, (page) => {
+    if (page?.parent?.getFlag(MODULE_ID, FLAGS.TYPE) === DOCUMENT_TYPES.PLAYER_DIARY) refreshPlayerDiary();
+  });
+}
+
+Hooks.on("createActor", refreshPlayerDiaryForActor);
+Hooks.on("updateActor", refreshPlayerDiaryForActor);
+Hooks.on("deleteActor", refreshPlayerDiaryForActor);
+Hooks.on("createItem", refreshPlayerDiaryForItem);
+Hooks.on("updateItem", refreshPlayerDiaryForItem);
+Hooks.on("deleteItem", refreshPlayerDiaryForItem);

@@ -1,7 +1,8 @@
 import { MODULE_ID, RESOURCE_KINDS, SETTINGS } from "../constants.js";
 import { DiaryService } from "../services/diary-service.js";
-import { ResourceService } from "../services/resource-service.js?v=1.4.10";
-import { ResourceEditor } from "./resource-editor.js?v=1.4.10";
+import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.11.0";
+import { ResourceService } from "../services/resource-service.js?v=1.11.0";
+import { ResourceEditor } from "./resource-editor.js?v=1.11.0";
 import { SessionBoard } from "./session-board.js";
 import { getElementDocument, getElementWindow, isPopoutAvailable, popoutApplication } from "../compat/popout.js";
 
@@ -9,13 +10,16 @@ const { ApplicationV2, DialogV2, HandlebarsApplicationMixin } = foundry.applicat
 
 const DASHBOARD_TABS = Object.freeze(["sessions", "library"]);
 const SESSION_VIEW_MODES = Object.freeze(["cards", "list"]);
+const MERCHANT_RESOURCE_KIND = "merchant";
 const KIND_ICONS = Object.freeze({
+  party: "fa-users",
   person: "fa-user",
   place: "fa-location-dot",
   city: "fa-city",
   item: "fa-gem",
   encounter: "fa-skull-crossbones",
-  faction: "fa-people-group"
+  faction: "fa-people-group",
+  post: "fa-newspaper"
 });
 
 function normalizeSearch(value) {
@@ -138,6 +142,55 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     root.addEventListener("input", this.#onFilterChange.bind(this), listenerOptions);
     root.addEventListener("change", this.#onFilterChange.bind(this), listenerOptions);
     root.addEventListener("contextmenu", this.#onContextMenu.bind(this), listenerOptions);
+    root.addEventListener("dragover", this.#onLibraryDragOver.bind(this), listenerOptions);
+    root.addEventListener("dragleave", this.#onLibraryDragLeave.bind(this), listenerOptions);
+    root.addEventListener("drop", (event) => void this.#onLibraryDrop(event), listenerOptions);
+  }
+
+  #libraryDropTarget(event) {
+    const target = event.target.closest?.("[data-dashboard-panel='library']");
+    return target && !target.hidden ? target : null;
+  }
+
+  #onLibraryDragOver(event) {
+    if (!game.user?.isGM || !this.#libraryDropTarget(event)) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    this.#libraryDropTarget(event).classList.add("dmj-drop-target");
+  }
+
+  #onLibraryDragLeave(event) {
+    const target = this.#libraryDropTarget(event);
+    if (!target || (event.relatedTarget?.nodeType && target.contains(event.relatedTarget))) return;
+    target.classList.remove("dmj-drop-target");
+  }
+
+  async #onLibraryDrop(event) {
+    const target = this.#libraryDropTarget(event);
+    if (!game.user?.isGM || !target || this.importingDocument) return;
+    event.preventDefault();
+    event.stopPropagation();
+    target.classList.remove("dmj-drop-target");
+    this.importingDocument = true;
+    try {
+      const result = await ResourceService.createFromDropData(event.dataTransfer?.getData("text/plain") ?? "", {
+        preferredKind: ["party", "person"].includes(this.filterKind) ? this.filterKind : ""
+      });
+      const data = ResourceService.getData(result.page);
+      this.activeTab = "library";
+      this.activeView = "library";
+      this.lastBaseTab = "library";
+      this.filterKind = data.kind;
+      this.filterQuery = "";
+      const message = result.created ? "DMJ.Resource.DropWorldCreated" : "DMJ.Resource.DropWorldExisting";
+      ui.notifications.info(game.i18n.format(message, { name: result.page.name }));
+      await this.render({ force: true });
+      await this.openResource(result.page);
+    } catch (error) {
+      ui.notifications.warn(error?.message || game.i18n.localize("DMJ.Resource.DropWorldInvalid"));
+    } finally {
+      this.importingDocument = false;
+    }
   }
 
   onPopoutLoaded(node) {
@@ -347,7 +400,7 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     if (!view) {
       view = { key, type, page, label, icon, controller: createController() };
       this.workspaceViews.set(key, view);
-      if (this.rendered) await this.#appendWorkspaceView(view);
+      if (this.rendered) await this.#appendWorkspaceView(view, { activate: true });
     } else {
       view.page = page;
       this.updateWorkspaceLabel(type, page.id, label);
@@ -361,7 +414,7 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     for (const view of this.workspaceViews.values()) await this.#appendWorkspaceView(view);
   }
 
-  async #appendWorkspaceView(view) {
+  async #appendWorkspaceView(view, { activate = false } = {}) {
     const navigation = this.element.querySelector(".dmj-dashboard-tabs");
     const shell = this.element.querySelector(".dmj-shell");
     if (!navigation || !shell) return;
@@ -403,8 +456,34 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     panel.setAttribute("role", "tabpanel");
     panel.dataset.workspacePanel = view.key;
     panel.hidden = true;
+    panel.setAttribute("aria-busy", "true");
+    const loading = this.#document().createElement("div");
+    loading.className = "dmj-workspace-loading";
+    const loadingIcon = this.#document().createElement("i");
+    loadingIcon.className = "fa-solid fa-spinner fa-spin";
+    loadingIcon.setAttribute("aria-hidden", "true");
+    const loadingLabel = this.#document().createElement("span");
+    loadingLabel.textContent = game.i18n.localize("DMJ.Workspace.Loading");
+    loading.append(loadingIcon, loadingLabel);
+    panel.append(loading);
     shell.append(panel);
-    await view.controller.mount(panel, this);
+    if (activate) {
+      this.activeView = view.key;
+      this.#applyActiveTab();
+      await new Promise((resolve) => this.#window().setTimeout(resolve, 0));
+    }
+    try {
+      await view.controller.mount(panel, this);
+      panel.removeAttribute("aria-busy");
+      view.controller.setActive?.(activate && this.activeView === view.key);
+    } catch (error) {
+      tab.remove();
+      panel.remove();
+      this.workspaceViews.delete(view.key);
+      if (this.activeView === view.key) this.activeView = this.lastBaseTab;
+      this.#applyActiveTab();
+      throw error;
+    }
   }
 
   async #closeWorkspace(key) {
@@ -458,6 +537,9 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
     }
     for (const panel of this.element.querySelectorAll("[data-workspace-panel]")) {
       panel.hidden = panel.dataset.workspacePanel !== this.activeView;
+    }
+    for (const view of this.workspaceViews.values()) {
+      view.controller.setActive?.(view.key === this.activeView);
     }
   }
 
@@ -711,6 +793,12 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
       option.textContent = game.i18n.localize(`DMJ.Resource.Kind.${kind}`);
       option.selected = this.filterKind === kind;
       kindSelect.append(option);
+      if (kind === "place" && ItemPilesIntegration.getStatus().available) {
+        const merchantOption = this.#document().createElement("option");
+        merchantOption.value = MERCHANT_RESOURCE_KIND;
+        merchantOption.textContent = game.i18n.localize("DMJ.Resource.Kind.merchant");
+        kindSelect.append(merchantOption);
+      }
     }
     kindLabel.append(kindText, kindSelect);
 
@@ -749,11 +837,14 @@ export class SessionDashboard extends HandlebarsApplicationMixin(ApplicationV2) 
         }
       });
       if (!data) return;
-      const page = await ResourceService.createResource(data.kind, data.name);
+      const page = data.kind === MERCHANT_RESOURCE_KIND
+        ? await ResourceService.createMerchantResource(data.name)
+        : await ResourceService.createResource(data.kind, data.name);
+      const pageKind = ResourceService.getData(page).kind;
       this.activeTab = "library";
       this.activeView = "library";
       this.lastBaseTab = "library";
-      this.filterKind = data.kind;
+      this.filterKind = pageKind;
       this.filterQuery = "";
       await this.render({ force: true });
       await this.openResource(page);

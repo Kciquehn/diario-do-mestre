@@ -1,16 +1,20 @@
 import { MODULE_ID, RESOURCE_KINDS } from "../constants.js";
-import { ResourceService } from "../services/resource-service.js";
+import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.11.0";
+import { ResourceService } from "../services/resource-service.js?v=1.11.0";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
 
 const { ApplicationV2, DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
+const MERCHANT_RESOURCE_KIND = "merchant";
 
 const KIND_ICONS = Object.freeze({
+  party: "fa-users",
   person: "fa-user",
   place: "fa-location-dot",
   city: "fa-city",
   item: "fa-gem",
   encounter: "fa-skull-crossbones",
-  faction: "fa-people-group"
+  faction: "fa-people-group",
+  post: "fa-newspaper"
 });
 
 function normalizeSearch(value) {
@@ -74,7 +78,51 @@ export class ResourceLibrary extends HandlebarsApplicationMixin(ApplicationV2) {
     root.addEventListener("input", this.#onFilterChange.bind(this), listenerOptions);
     root.addEventListener("change", this.#onFilterChange.bind(this), listenerOptions);
     root.addEventListener("contextmenu", this.#onContextMenu.bind(this), listenerOptions);
+    root.addEventListener("dragover", this.#onDragOver.bind(this), listenerOptions);
+    root.addEventListener("dragleave", this.#onDragLeave.bind(this), listenerOptions);
+    root.addEventListener("drop", (event) => void this.#onDrop(event), listenerOptions);
     this.#applyFilters();
+  }
+
+  #dropTarget(root = this.element) {
+    return root.querySelector?.(".dmj-library-shell") ?? root;
+  }
+
+  #onDragOver(event) {
+    if (!game.user?.isGM) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    this.#dropTarget(event.currentTarget).classList.add("dmj-drop-target");
+  }
+
+  #onDragLeave(event) {
+    const target = this.#dropTarget(event.currentTarget);
+    if (event.relatedTarget?.nodeType && target.contains(event.relatedTarget)) return;
+    target.classList.remove("dmj-drop-target");
+  }
+
+  async #onDrop(event) {
+    if (!game.user?.isGM || this.importingDocument) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.#dropTarget(event.currentTarget).classList.remove("dmj-drop-target");
+    this.importingDocument = true;
+    try {
+      const result = await ResourceService.createFromDropData(event.dataTransfer?.getData("text/plain") ?? "", {
+        preferredKind: ["party", "person"].includes(this.filterKind) ? this.filterKind : ""
+      });
+      const data = ResourceService.getData(result.page);
+      this.filterKind = data.kind;
+      this.filterQuery = "";
+      const message = result.created ? "DMJ.Resource.DropWorldCreated" : "DMJ.Resource.DropWorldExisting";
+      ui.notifications.info(game.i18n.format(message, { name: result.page.name }));
+      await this.render({ force: true });
+      await game.modules.get(MODULE_ID)?.api?.openResource?.(result.page);
+    } catch (error) {
+      ui.notifications.warn(error?.message || game.i18n.localize("DMJ.Resource.DropWorldInvalid"));
+    } finally {
+      this.importingDocument = false;
+    }
   }
 
   onPopoutLoaded(node) {
@@ -223,6 +271,12 @@ export class ResourceLibrary extends HandlebarsApplicationMixin(ApplicationV2) {
       option.textContent = game.i18n.localize(`DMJ.Resource.Kind.${kind}`);
       option.selected = this.filterKind === kind;
       kindSelect.append(option);
+      if (kind === "place" && ItemPilesIntegration.getStatus().available) {
+        const merchantOption = this.#document().createElement("option");
+        merchantOption.value = MERCHANT_RESOURCE_KIND;
+        merchantOption.textContent = game.i18n.localize("DMJ.Resource.Kind.merchant");
+        kindSelect.append(merchantOption);
+      }
     }
     kindLabel.append(kindText, kindSelect);
 
@@ -261,8 +315,10 @@ export class ResourceLibrary extends HandlebarsApplicationMixin(ApplicationV2) {
         }
       });
       if (!data) return;
-      const page = await ResourceService.createResource(data.kind, data.name);
-      this.filterKind = data.kind;
+      const page = data.kind === MERCHANT_RESOURCE_KIND
+        ? await ResourceService.createMerchantResource(data.name)
+        : await ResourceService.createResource(data.kind, data.name);
+      this.filterKind = ResourceService.getData(page).kind;
       this.filterQuery = "";
       await this.render({ force: true });
       await game.modules.get(MODULE_ID).api.openResource(page);

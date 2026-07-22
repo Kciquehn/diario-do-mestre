@@ -1,8 +1,9 @@
 import { MODULE_ID } from "../constants.js";
-import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.4.10";
+import { ItemPilesIntegration } from "../integrations/item-piles.js?v=1.11.0";
+import { PLACE_LAYOUTS, PLACE_TYPES, ResourceService, RESOURCE_FIELDS } from "../services/resource-service.js?v=1.11.0";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
 import { getElementDocument, getElementWindow } from "../compat/popout.js";
-import { CityMapController } from "./city-map-controller.js?v=1.4.10";
+import { CityMapController } from "./city-map-controller.js?v=1.11.0";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { ImagePopout } = foundry.applications.apps;
@@ -10,12 +11,21 @@ const AUTOSAVE_DELAY_MS = 750;
 const TEMPLATE = `modules/${MODULE_ID}/templates/resource-editor-v13.hbs`;
 const CITY_MAP_TEMPLATE = `modules/${MODULE_ID}/templates/city-map-panel-v1.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
+  party: "fa-users",
   person: "fa-user",
   place: "fa-location-dot",
   city: "fa-city",
   item: "fa-gem",
   encounter: "fa-skull-crossbones",
-  faction: "fa-people-group"
+  faction: "fa-people-group",
+  post: "fa-newspaper"
+});
+const PERSON_FIELD_ICONS = Object.freeze({
+  role: "fa-star",
+  appearance: "fa-eye",
+  personality: "fa-masks-theater",
+  motivation: "fa-bullseye",
+  secrets: "fa-user-secret"
 });
 
 function normalizeSearch(value) {
@@ -30,6 +40,8 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     this.autosaveRevision = 0;
     this.savedRevision = 0;
     this.autosaveState = "saved";
+    this.embeddedActive = true;
+    this.cityMapActivationFrame = null;
     this.savePromise = null;
     this.saveErrorNotified = false;
     this.slashState = null;
@@ -57,11 +69,26 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async #prepareViewContext() {
     const data = ResourceService.getData(this.page);
+    const itemPilesStatus = ItemPilesIntegration.getStatus();
+    const merchants = data.isPlace ? ItemPilesIntegration.getMerchants() : [];
+    const merchantOptions = merchants.map((actor) => ({
+      uuid: actor.uuid,
+      name: actor.name,
+      selected: actor.uuid === data.commerce.merchantUuid
+    }));
+    if (data.isPlace && data.commerce.merchantUuid && !merchantOptions.some((entry) => entry.uuid === data.commerce.merchantUuid)) {
+      merchantOptions.push({
+        uuid: data.commerce.merchantUuid,
+        name: game.i18n.localize("DMJ.ItemPiles.MerchantMissingOption"),
+        selected: true
+      });
+    }
     const linked = data.isCity || data.isPlace ? null : await ResourceService.getLinkedDocument(this.page);
     const linkedLabel = linked ? `${linked.name} (${linked.documentName})` : game.i18n.localize("DMJ.Resource.Drop");
     const cityMapImage = data.isCity ? data.cityMap.image : "";
     return {
       ...data,
+      isPerson: data.kind === "person",
       kindLabel: game.i18n.localize(`DMJ.Resource.Kind.${data.kind}`),
       placeTypes: data.isPlace ? PLACE_TYPES.map((id) => ({
         id,
@@ -75,10 +102,19 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
         hint: game.i18n.localize(`DMJ.Resource.Layout.${id}Hint`),
         selected: id === data.layout
       })) : [],
-      fields: RESOURCE_FIELDS[data.kind].map((field) => ({
+      itemPilesAvailable: itemPilesStatus.available,
+      itemPilesActive: itemPilesStatus.reason !== "inactive",
+      itemPilesConflict: itemPilesStatus.conflict,
+      itemPilesProviderLabel: itemPilesStatus.providerLabel,
+      merchantOptions,
+      hasCommerceMerchant: Boolean(data.commerce.merchantUuid),
+      publicationPublished: data.publication.published,
+      fields: RESOURCE_FIELDS[data.kind].map((field, index) => ({
         id: field,
         label: game.i18n.localize(`DMJ.Resource.Field.${data.kind}.${field}`),
-        editorHTML: sanitizeRichTextHTML(data[`${field}HTML`] ?? plainTextToRichHTML(data[field]))
+        editorHTML: sanitizeRichTextHTML(data[`${field}HTML`] ?? plainTextToRichHTML(data[field])),
+        icon: data.kind === "person" ? PERSON_FIELD_ICONS[field] ?? "fa-pen" : "",
+        expanded: data.kind === "person" && index === 0
       })),
       notesHTML: sanitizeRichTextHTML(data.notesHTML ?? plainTextToRichHTML(data.notes)),
       preview: data.image || cityMapImage || linked?.img || "icons/svg/mystery-man.svg",
@@ -96,6 +132,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
   async mount(container, host) {
     this.embeddedRoot = container;
     this.workspaceHost = host;
+    this.embeddedActive = !container.hidden;
     container.classList.add(MODULE_ID, "resource-editor", "dmj-workspace-view");
     const context = await this.#prepareViewContext();
     container.innerHTML = await foundry.applications.handlebars.renderTemplate(TEMPLATE, context);
@@ -164,6 +201,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     dropZone?.addEventListener("dragover", (event) => event.preventDefault(), listenerOptions);
     dropZone?.addEventListener("drop", this.#onDrop.bind(this), listenerOptions);
     form.querySelector("[data-action='open-linked']")?.addEventListener("click", () => this.#openLinked(), listenerOptions);
+    form.querySelector("[data-action='open-commerce']")?.addEventListener("click", () => this.#openCommerce(form), listenerOptions);
     form.querySelector("[data-action='toggle-place-header']")?.addEventListener("click", () => this.#togglePlaceHeader(form), listenerOptions);
     const portrait = form.querySelector("[data-action='view-image']");
     portrait?.addEventListener("click", (event) => {
@@ -188,7 +226,7 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
         openResource: (page) => this.workspaceHost?.openResource?.(page) ?? game.modules.get(MODULE_ID)?.api?.openResource?.(page),
         onResourceCreated: (page) => this.workspaceHost?.addResourceTile?.(page) ?? game.modules.get(MODULE_ID)?.api?.addResource?.(page)
       });
-      this.cityMapController.activate();
+      if (this.embeddedActive) this.#scheduleCityMapActivation(root);
     }
     this.#setAutosaveStatus(this.autosaveState);
   }
@@ -222,9 +260,38 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#closeImageContextMenu();
     this.#closeSlashMenu();
     this.#closeMentionMenu();
+    this.#cancelCityMapActivation();
     this.cityMapController?.destroy();
     this.cityMapController = null;
     this.listenerController?.abort();
+  }
+
+  setActive(active) {
+    this.embeddedActive = Boolean(active);
+    if (!this.embeddedActive) {
+      this.#cancelCityMapActivation();
+      return;
+    }
+    const root = this.#root();
+    if (this.cityMapController && !this.cityMapController.listenerController) this.#scheduleCityMapActivation(root);
+  }
+
+  #scheduleCityMapActivation(root) {
+    if (!this.cityMapController || this.cityMapController.listenerController || this.cityMapActivationFrame !== null) return;
+    const view = getElementWindow(root);
+    this.cityMapActivationFrame = view.requestAnimationFrame(() => {
+      this.cityMapActivationFrame = view.requestAnimationFrame(() => {
+        this.cityMapActivationFrame = null;
+        if (!this.embeddedActive || !root.isConnected || !this.cityMapController) return;
+        this.cityMapController.activate();
+      });
+    });
+  }
+
+  #cancelCityMapActivation() {
+    if (this.cityMapActivationFrame === null) return;
+    getElementWindow(this.#root()).cancelAnimationFrame(this.cityMapActivationFrame);
+    this.cityMapActivationFrame = null;
   }
 
   #root() {
@@ -469,6 +536,9 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
   #onFormInput(event) {
     if (event.target.matches?.("input[name='layout']")) {
       event.target.form.dataset.placeLayout = event.target.value;
+    }
+    if (event.target.matches?.("select[name='placeType']")) {
+      event.target.form.dataset.placeType = event.target.value;
     }
     const editor = event.target.closest?.("[data-resource-rich-editor]");
     if (editor) this.#handleEditorMutation(editor);
@@ -1139,6 +1209,15 @@ export class ResourceEditor extends HandlebarsApplicationMixin(ApplicationV2) {
       await document.sheet.render({ force: true });
     } catch (error) {
       ui.notifications.warn(error.message || game.i18n.localize("DMJ.Resource.LinkedMissing"));
+    }
+  }
+
+  async #openCommerce(form) {
+    try {
+      const uuid = form?.elements?.commerceMerchantUuid?.value?.trim();
+      await ItemPilesIntegration.openMerchant(uuid);
+    } catch (error) {
+      ui.notifications.warn(error?.message || game.i18n.localize("DMJ.ItemPiles.Error.Unavailable"));
     }
   }
 }

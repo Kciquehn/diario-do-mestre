@@ -1,0 +1,88 @@
+<div class="dmj-player-social">
+  <header class="dmj-social-cover">
+    <div class="dmj-social-emblem"><i class="fa-solid fa-compass" aria-hidden="true"></i></div>
+    <div class="dmj-social-identity"><p>{{localize "DMJ.PlayerDiary.Kicker"}}</p><h1>{{localize "DMJ.PlayerDiary.Title"}}</h1><span>{{localize "DMJ.PlayerDiary.Tagline"}}</span>{{#if canManage}}<small class="dmj-document-drop-hint"><i class="fa-solid fa-arrow-down-long" aria-hidden="true"></i> {{localize "DMJ.PlayerDiary.DropWorldHint"}}</small>{{/if}}</div>
+    <label class="dmj-social-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" data-player-search value="{{searchQuery}}" placeholder="{{localize "DMJ.PlayerDiary.Search"}}" aria-label="{{localize "DMJ.PlayerDiary.Search"}}"></label>
+  </header>
+
+  {{#if integrationConflict}}<p class="dmj-player-warning"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{localize "DMJ.ItemPiles.Error.Conflict"}}</p>{{/if}}
+
+  <div class="dmj-social-layout">
+    <aside class="dmj-social-nav">
+      <strong>{{localize "DMJ.PlayerDiary.Explore"}}</strong>
+      <nav aria-label="{{localize "DMJ.PlayerDiary.Sections"}}">
+        {{#each categories}}<button type="button" class="{{#if active}}active{{/if}}" data-player-filter="{{id}}" data-player-filter-title="{{heading}}" aria-pressed="{{#if active}}true{{else}}false{{/if}}"><i class="fa-solid {{icon}}" aria-hidden="true"></i><span>{{label}}</span><small>{{count}}</small></button>{{/each}}
+      </nav>
+    </aside>
+
+    <main class="dmj-social-main">
+      {{#if showDetail}}
+        <article class="dmj-wiki-article">
+          <button type="button" class="dmj-wiki-back" data-action="close-player-article"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> {{localize "DMJ.PlayerDiary.BackToFeed"}}</button>
+          {{#if activeArticle.image}}<img class="dmj-wiki-cover" src="{{activeArticle.image}}" alt="">{{else}}<div class="dmj-wiki-cover-placeholder"><i class="fa-solid {{activeArticle.icon}}" aria-hidden="true"></i></div>{{/if}}
+          <header><span><i class="fa-solid {{activeArticle.icon}}" aria-hidden="true"></i> {{activeArticle.kindLabel}}</span><h1>{{activeArticle.name}}</h1>{{#if activeArticle.publishedLabel}}<time>{{localize "DMJ.PlayerDiary.Published"}} {{activeArticle.publishedLabel}}</time>{{/if}}</header>
+          <div class="dmj-wiki-content">
+            {{#each activeArticle.fields}}<section><h2>{{label}}</h2><div>{{{html}}}</div></section>{{/each}}
+          </div>
+          {{#if activeArticle.isCommerce}}
+            <section class="dmj-commerce-storefront">
+              <header>
+                <div><span>{{localize "DMJ.PlayerDiary.Commerce.Storefront"}}</span><h2>{{localize "DMJ.PlayerDiary.Commerce.Catalog"}}</h2></div>
+                {{#if activeArticle.commerceBuyerName}}<p><i class="fa-solid fa-user-shield" aria-hidden="true"></i> {{localize "DMJ.PlayerDiary.Commerce.BuyingAs"}} <strong>{{activeArticle.commerceBuyerName}}</strong></p>{{/if}}
+              </header>
+              {{#if activeArticle.commerceAvailable}}
+                {{#if activeArticle.commerceNeedsCharacter}}<p class="dmj-commerce-notice"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> {{localize "DMJ.ItemPiles.Error.CharacterRequired"}}</p>{{/if}}
+                {{#if activeArticle.commerceClosed}}<p class="dmj-commerce-notice closed"><i class="fa-solid fa-lock" aria-hidden="true"></i> {{localize "DMJ.PlayerDiary.Commerce.ClosedHint"}}</p>{{/if}}
+                {{#if activeArticle.commerceEmpty}}
+                  <div class="dmj-commerce-empty"><i class="fa-solid fa-box-open" aria-hidden="true"></i><p>{{localize "DMJ.PlayerDiary.Commerce.NoItems"}}</p></div>
+                {{else}}
+                  <div class="dmj-commerce-catalog">
+                    {{#each activeArticle.commerceItems}}
+                      <article class="dmj-commerce-item" data-commerce-item>
+                        <img src="{{image}}" alt="">
+                        <div class="dmj-commerce-item-info"><h3>{{name}}</h3><span>{{type}}</span>{{#if showStock}}<small>{{localize "DMJ.PlayerDiary.Commerce.Stock"}}: {{stock}}</small>{{/if}}</div>
+                        <label class="dmj-commerce-price"><span>{{localize "DMJ.PlayerDiary.Commerce.Price"}}</span><select data-commerce-price aria-label="{{localize "DMJ.PlayerDiary.Commerce.Price"}}">{{#if prices}}{{#each prices}}<option value="{{paymentIndex}}" data-maximum="{{maximum}}" {{#if selected}}selected{{/if}} {{#unless purchasable}}disabled{{/unless}}>{{label}}</option>{{/each}}{{else}}<option disabled selected>{{priceLabel}}</option>{{/if}}</select></label>
+                        <label class="dmj-commerce-quantity"><span>{{localize "DMJ.PlayerDiary.Commerce.Quantity"}}</span><input type="number" data-commerce-quantity value="1" min="1" max="{{maximum}}" step="1"></label>
+                        <button type="button" class="dmj-commerce-buy" data-action="purchase-commerce-item" data-merchant-uuid="{{../activeArticle.merchantUuid}}" data-item-id="{{id}}" {{#unless canBuy}}disabled{{/unless}}><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> {{localize "DMJ.PlayerDiary.Commerce.Buy"}}</button>
+                      </article>
+                    {{/each}}
+                  </div>
+                {{/if}}
+              {{else}}
+                <p class="dmj-commerce-notice"><i class="fa-solid fa-plug-circle-xmark" aria-hidden="true"></i> {{localize "DMJ.PlayerDiary.Commerce.Unavailable"}}</p>
+              {{/if}}
+            </section>
+            <footer><span class="dmj-commerce-status {{#if activeArticle.commerceClosed}}closed{{else}}{{#if activeArticle.commerceAvailable}}open{{else}}unavailable{{/if}}{{/if}}">{{activeArticle.commerceStatus}}</span><button type="button" data-action="open-commerce" data-merchant-uuid="{{activeArticle.merchantUuid}}" {{#unless activeArticle.commerceAvailable}}disabled{{/unless}}><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> {{localize "DMJ.PlayerDiary.Commerce.OpenFullShop"}}</button></footer>
+          {{/if}}
+        </article>
+      {{else}}
+        <header class="dmj-feed-heading"><div><p>{{localize "DMJ.PlayerDiary.Feed.Kicker"}}</p><h2 data-player-section-title>{{localize "DMJ.PlayerDiary.Feed.Title"}}</h2></div><span><i class="fa-solid fa-sparkles" aria-hidden="true"></i> {{localize "DMJ.PlayerDiary.Feed.Updated"}}</span></header>
+        {{#if empty}}
+          <div class="dmj-player-empty"><i class="fa-solid fa-book-open" aria-hidden="true"></i><h2>{{localize "DMJ.PlayerDiary.Empty"}}</h2><p>{{localize "DMJ.PlayerDiary.EmptyHint"}}</p></div>
+        {{else}}
+          <section class="dmj-social-feed">
+            {{#each articles}}
+              <article class="dmj-social-card" data-player-article data-filter-values="{{filterValues}}" data-search="{{normalizedSearch}}">
+                {{#if image}}<img src="{{image}}" alt="">{{else}}<div class="dmj-social-card-placeholder"><i class="fa-solid {{icon}}" aria-hidden="true"></i></div>{{/if}}
+                <div class="dmj-social-card-body">
+                  <span class="dmj-social-category"><i class="fa-solid {{icon}}" aria-hidden="true"></i> {{kindLabel}}</span>
+                  <h2>{{name}}</h2>
+                  {{#if excerpt}}<p>{{excerpt}}</p>{{/if}}
+                  <footer>{{#if publishedLabel}}<time>{{publishedLabel}}</time>{{/if}}<button type="button" data-action="open-player-article" data-article-id="{{id}}">{{localize "DMJ.PlayerDiary.ReadMore"}} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button></footer>
+                </div>
+              </article>
+            {{/each}}
+          </section>
+          <div class="dmj-player-empty" data-player-filter-empty hidden><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><h2>{{localize "DMJ.PlayerDiary.FilterEmpty"}}</h2></div>
+        {{/if}}
+      {{/if}}
+    </main>
+
+    <aside class="dmj-social-about">
+      <section><i class="fa-solid fa-book-atlas" aria-hidden="true"></i><div><strong>{{articleCount}}</strong><span>{{localize "DMJ.PlayerDiary.Stats.Entries"}}</span></div></section>
+      <section><i class="fa-solid fa-users" aria-hidden="true"></i><div><strong>{{personCount}}</strong><span>{{localize "DMJ.PlayerDiary.Stats.People"}}</span></div></section>
+      <section><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i><div><strong>{{placeCount}}</strong><span>{{localize "DMJ.PlayerDiary.Stats.Places"}}</span></div></section>
+      <p><i class="fa-solid fa-circle-info" aria-hidden="true"></i> {{localize "DMJ.PlayerDiary.About"}}</p>
+    </aside>
+  </div>
+</div>

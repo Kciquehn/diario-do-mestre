@@ -15,6 +15,7 @@ export const SESSION_FIELDS = Object.freeze([
   "improvisation",
   "notes"
 ]);
+export const ADVENTURE_IMAGE_HEIGHT = Object.freeze({ default: 128, min: 72, max: 420, step: 16 });
 
 const BOARD_BLOCK_TYPES = Object.freeze(["text", "callout", "check", "test", "clue"]);
 const DEFAULT_COLUMN_WIDTH = 300;
@@ -39,7 +40,13 @@ function getInputValue(input, field) {
   return typeof input?.get === "function" ? input.get(field) : input?.[field];
 }
 
-function normalizeSessionInput(input, fallbackImage = "") {
+function normalizeAdventureImageHeight(value) {
+  const height = Number(value);
+  if (!Number.isFinite(height)) return ADVENTURE_IMAGE_HEIGHT.default;
+  return Math.round(Math.min(ADVENTURE_IMAGE_HEIGHT.max, Math.max(ADVENTURE_IMAGE_HEIGHT.min, height)));
+}
+
+function normalizeSessionInput(input, fallbackImage = "", fallbackImageHeight = ADVENTURE_IMAGE_HEIGHT.default) {
   const name = cleanName(getInputValue(input, "name"));
   if (!name) throw new Error(game.i18n.localize("DMJ.Error.SessionName"));
   const data = Object.fromEntries(SESSION_FIELDS.map((field) => [field, String(getInputValue(input, field) ?? "").trim()]));
@@ -47,7 +54,8 @@ function normalizeSessionInput(input, fallbackImage = "") {
   const status = ["draft", "ready", "played"].includes(rawStatus) ? rawStatus : "draft";
   const date = String(getInputValue(input, "date") ?? "").trim().slice(0, 32);
   const image = String(getInputValue(input, "image") ?? fallbackImage).trim().slice(0, 2000);
-  return { name, data, status, date, image };
+  const imageHeight = normalizeAdventureImageHeight(getInputValue(input, "imageHeight") ?? fallbackImageHeight);
+  return { name, data, status, date, image, imageHeight };
 }
 
 function normalizeColumnWidth(value) {
@@ -352,6 +360,10 @@ export class DiaryService {
     return String(page?.getFlag(MODULE_ID, "image") ?? "").trim().slice(0, 2000);
   }
 
+  static getSessionImageHeight(page) {
+    return normalizeAdventureImageHeight(page?.getFlag(MODULE_ID, "imageHeight"));
+  }
+
   static getBoardData(page) {
     const board = { activeSceneId: "", scenes: [] };
     if (!page) return board;
@@ -467,7 +479,7 @@ export class DiaryService {
       throw new Error(game.i18n.localize("DMJ.Error.InvalidSession"));
     }
 
-    const session = normalizeSessionInput(formData, this.getSessionImage(page));
+    const session = normalizeSessionInput(formData, this.getSessionImage(page), this.getSessionImageHeight(page));
 
     const board = this.getBoardData(page);
     await page.update({
@@ -475,7 +487,8 @@ export class DiaryService {
       "text.content": sessionContent(session.data, board),
       [`flags.${MODULE_ID}.status`]: session.status,
       [`flags.${MODULE_ID}.date`]: session.date,
-      [`flags.${MODULE_ID}.image`]: session.image
+      [`flags.${MODULE_ID}.image`]: session.image,
+      [`flags.${MODULE_ID}.imageHeight`]: session.imageHeight
     });
     return page;
   }
@@ -505,7 +518,9 @@ export class DiaryService {
     if (!normalized.scenes.some((scene) => scene.id === normalized.activeSceneId)) {
       normalized.activeSceneId = normalized.scenes[0]?.id ?? "";
     }
-    const session = sessionInput ? normalizeSessionInput(sessionInput, this.getSessionImage(page)) : null;
+    const session = sessionInput
+      ? normalizeSessionInput(sessionInput, this.getSessionImage(page), this.getSessionImageHeight(page))
+      : null;
     const update = {
       "text.content": sessionContent(session?.data ?? this.getSessionData(page), normalized)
     };
@@ -514,6 +529,7 @@ export class DiaryService {
       update[`flags.${MODULE_ID}.status`] = session.status;
       update[`flags.${MODULE_ID}.date`] = session.date;
       update[`flags.${MODULE_ID}.image`] = session.image;
+      update[`flags.${MODULE_ID}.imageHeight`] = session.imageHeight;
     }
     await page.update(update);
     return page;

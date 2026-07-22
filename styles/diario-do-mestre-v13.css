@@ -1,4 +1,4 @@
-@import url("./diario-do-mestre.css?v=1.4.10");
+@import url("./diario-do-mestre.css?v=1.11.0");
 
 .dmj-resource-form[data-resource-kind="city"] .dmj-city-map-panel {
   display: block !important;

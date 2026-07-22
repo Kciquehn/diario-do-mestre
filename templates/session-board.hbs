@@ -31,12 +31,14 @@
           <button type="button" class="dmj-adventure-private-toggle" data-action="toggle-details" title="{{localize "DMJ.Board.ToggleDetails"}}" aria-label="{{localize "DMJ.Board.ToggleDetails"}}"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span>{{localize "DMJ.Planner.Private"}}</span><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
         </header>
         <div class="dmj-adventure-sidebar-content">
-          <div class="dmj-adventure-cover">
+          <div class="dmj-adventure-cover" data-adventure-cover data-image-height="{{sessionDetails.imageHeight}}" style="--dmj-adventure-cover-height: {{sessionDetails.imageHeight}}px;">
             <button type="button" data-action="select-adventure-image" data-target="image" data-type="image" title="{{localize "DMJ.Session.SelectImage"}}" aria-label="{{localize "DMJ.Session.SelectImage"}}">
               <img src="{{sessionDetails.image}}" alt="" data-adventure-image-preview {{#unless sessionDetails.image}}hidden{{/unless}}>
               <span data-adventure-image-placeholder {{#if sessionDetails.image}}hidden{{/if}}><i class="fa-solid fa-image" aria-hidden="true"></i><small>{{localize "DMJ.Session.SelectImage"}}</small></span>
             </button>
             <input name="image" type="hidden" value="{{sessionDetails.image}}" data-session-detail>
+            <input name="imageHeight" type="hidden" value="{{sessionDetails.imageHeight}}" data-session-detail>
+            <div class="dmj-adventure-cover-resize" data-adventure-image-resize-handle role="separator" aria-orientation="horizontal" aria-valuemin="72" aria-valuemax="420" aria-valuenow="{{sessionDetails.imageHeight}}" aria-label="{{localize "DMJ.Session.ResizeImage"}}" title="{{localize "DMJ.Session.ResizeImage"}}" tabindex="0"><span aria-hidden="true"></span></div>
           </div>
           <label class="dmj-adventure-name" for="dmj-board-name-{{formIdSuffix}}">{{localize "DMJ.Planner.SessionName"}}</label>
           <input id="dmj-board-name-{{formIdSuffix}}" name="name" type="text" value="{{sessionDetails.name}}" maxlength="120" required data-session-detail>

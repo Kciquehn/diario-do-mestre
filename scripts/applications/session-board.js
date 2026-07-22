@@ -1,5 +1,5 @@
 import { MODULE_ID } from "../constants.js";
-import { DiaryService, SESSION_FIELDS } from "../services/diary-service.js";
+import { ADVENTURE_IMAGE_HEIGHT, DiaryService, SESSION_FIELDS } from "../services/diary-service.js";
 import { CLUE_DRAG_TYPE } from "../services/clue-service.js";
 import { ResourceService } from "../services/resource-service.js";
 import { plainTextToRichHTML, richTextToPlainText, sanitizeRichTextHTML } from "../utils/rich-text.js";
@@ -18,12 +18,14 @@ const COLUMN_KEYBOARD_STEP = 20;
 const MAX_SCENE_LINKS = 100;
 const TEMPLATE = `modules/${MODULE_ID}/templates/session-board.hbs`;
 const RESOURCE_MENTION_ICONS = Object.freeze({
+  party: "fa-users",
   person: "fa-user",
   place: "fa-location-dot",
   city: "fa-city",
   item: "fa-gem",
   encounter: "fa-skull-crossbones",
-  faction: "fa-people-group"
+  faction: "fa-people-group",
+  post: "fa-newspaper"
 });
 const SESSION_FIELD_PRESENTATION = Object.freeze({
   goal: { icon: "fa-bullseye", rows: 3, placeholder: "DMJ.Placeholder.goal" },
@@ -111,6 +113,12 @@ function normalizeTextareaHeight(value) {
   return Number.isFinite(height) && height > 0 ? Math.round(Math.min(1600, Math.max(36, height))) : null;
 }
 
+function normalizeAdventureImageHeight(value) {
+  const height = Number(value);
+  if (!Number.isFinite(height)) return ADVENTURE_IMAGE_HEIGHT.default;
+  return Math.round(Math.min(ADVENTURE_IMAGE_HEIGHT.max, Math.max(ADVENTURE_IMAGE_HEIGHT.min, height)));
+}
+
 function normalizeColumnWidth(value) {
   const width = Number(value);
   if (!Number.isFinite(width)) return DEFAULT_COLUMN_WIDTH;
@@ -142,6 +150,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     this.saveErrorNotified = false;
     this.editorResizeState = null;
     this.columnResizeState = null;
+    this.adventureImageResizeState = null;
     this.embeddedRoot = null;
     this.workspaceHost = null;
     this.sessionDetails = null;
@@ -245,6 +254,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
       name: this.page.name,
       date: this.page.getFlag(MODULE_ID, "date") ?? "",
       image: DiaryService.getSessionImage(this.page),
+      imageHeight: DiaryService.getSessionImageHeight(this.page),
       status: ["draft", "ready", "played"].includes(rawStatus) ? rawStatus : "draft"
     };
   }
@@ -528,7 +538,8 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#clearAutosaveTimer();
     this.editorResizeState = null;
     this.columnResizeState = null;
-    this.#root()?.classList.remove("dmj-resizing-column-width", "dmj-resizing-column-height");
+    this.adventureImageResizeState = null;
+    this.#root()?.classList.remove("dmj-resizing-column-width", "dmj-resizing-column-height", "dmj-resizing-adventure-image");
     this.listenerController?.abort();
   }
 
@@ -561,6 +572,7 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
       name: String(values.name ?? ""),
       date: String(values.date ?? ""),
       image: String(values.image ?? ""),
+      imageHeight: normalizeAdventureImageHeight(values.imageHeight),
       status: ["draft", "ready", "played"].includes(rawStatus) ? rawStatus : "draft"
     };
   }
@@ -871,6 +883,24 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   #onPointerDown(event) {
+    const adventureImageHandle = event.target.closest?.("[data-adventure-image-resize-handle]");
+    if (adventureImageHandle && event.button === 0) {
+      const cover = adventureImageHandle.closest("[data-adventure-cover]");
+      const imageButton = cover?.querySelector("[data-action='select-adventure-image']");
+      if (!cover || !imageButton) return;
+      event.preventDefault();
+      const startValue = normalizeAdventureImageHeight(imageButton.getBoundingClientRect().height);
+      this.adventureImageResizeState = {
+        cover,
+        pointerId: event.pointerId,
+        startY: event.clientY,
+        startValue,
+        value: startValue
+      };
+      this.#root().classList.add("dmj-resizing-adventure-image");
+      return;
+    }
+
     const resizeHandle = event.target.closest?.("[data-column-resize-handle]");
     if (resizeHandle && event.button === 0) {
       const column = resizeHandle.closest(".dmj-kanban-column");
@@ -903,6 +933,13 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   #onPointerMove(event) {
+    const imageState = this.adventureImageResizeState;
+    if (imageState?.cover.isConnected && event.pointerId === imageState.pointerId) {
+      event.preventDefault();
+      imageState.value = this.#applyAdventureImageHeight(imageState.cover, imageState.startValue + event.clientY - imageState.startY);
+      return;
+    }
+
     const state = this.columnResizeState;
     if (!state?.column.isConnected || event.pointerId !== state.pointerId) return;
     event.preventDefault();
@@ -912,6 +949,13 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   #onPointerUp(event) {
+    const imageState = this.adventureImageResizeState;
+    if (imageState && (event.pointerId === undefined || event.pointerId === imageState.pointerId)) {
+      this.adventureImageResizeState = null;
+      this.#root()?.classList.remove("dmj-resizing-adventure-image");
+      if (imageState.cover.isConnected && Math.abs(imageState.value - imageState.startValue) >= 1) this.#scheduleAutosave();
+    }
+
     const columnState = this.columnResizeState;
     if (columnState && (event.pointerId === undefined || event.pointerId === columnState.pointerId)) {
       this.columnResizeState = null;
@@ -937,6 +981,16 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
     return width;
   }
 
+  #applyAdventureImageHeight(cover, value) {
+    const height = normalizeAdventureImageHeight(value);
+    cover.dataset.imageHeight = String(height);
+    cover.style.setProperty("--dmj-adventure-cover-height", `${height}px`);
+    const input = cover.querySelector("input[name='imageHeight']");
+    if (input) input.value = String(height);
+    cover.querySelector("[data-adventure-image-resize-handle]")?.setAttribute("aria-valuenow", String(height));
+    return height;
+  }
+
   #applyColumnHeight(column, value) {
     const height = normalizeColumnHeight(value) ?? MIN_COLUMN_HEIGHT;
     column.dataset.columnHeight = String(height);
@@ -946,6 +1000,18 @@ export class SessionBoard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   #onKeyDown(event) {
+    const adventureImageHandle = event.target.closest?.("[data-adventure-image-resize-handle]");
+    if (adventureImageHandle && ["ArrowUp", "ArrowDown"].includes(event.key)) {
+      const cover = adventureImageHandle.closest("[data-adventure-cover]");
+      if (!cover) return;
+      event.preventDefault();
+      const current = normalizeAdventureImageHeight(cover.dataset.imageHeight);
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      this.#applyAdventureImageHeight(cover, current + direction * ADVENTURE_IMAGE_HEIGHT.step);
+      this.#scheduleAutosave();
+      return;
+    }
+
     const resizeHandle = event.target.closest?.("[data-column-resize-handle]");
     const resizeAxis = resizeHandle?.dataset.resizeAxis === "height" ? "height" : "width";
     const resizeKeys = resizeAxis === "height" ? ["ArrowUp", "ArrowDown"] : ["ArrowLeft", "ArrowRight"];
